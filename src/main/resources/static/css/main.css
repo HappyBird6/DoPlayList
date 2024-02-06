@@ -1,0 +1,88 @@
+/* 구획 */
+body{
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+header {
+    width: 100vw;
+    height: 10vh;
+    background-color: rgb(83, 83, 83);
+}
+main {
+    height: 80vh;
+    display: flex;
+    justify-content: center;
+}
+footer {
+    width: 100vw;
+    height: 10vh;
+    background-color: rgb(83, 83, 83);
+}
+.lnb{
+    width: 250px;
+    height: 100%;
+    background-color: rgb(116, 116, 116);
+}
+.rnb{
+    width: 250px;
+    height: 100%;
+    background-color: rgb(116, 116, 116);
+}
+.content{
+    height: 100%;
+    background-color: rgb(146, 146, 146);
+    width: 1000px;
+}
+.flex-center{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.section-input{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+.section-input-option{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+.section-input-option-main{
+    width: 100%;
+    max-width: 916px;
+    display: flex;
+}
+.section-input-option-main > div{
+    margin-left: 10px;
+}
+.section-input-option-main > div:first-child{
+    margin-left:-5px;
+}
+.input-link{
+    width: 80%;
+    max-width: 800px;
+    font-size: 30px;
+}
+.section-input .blank{
+    width: 10%;
+    min-width: 100px;
+}
+.input-link-button{
+    border: 1px solid black;
+    width: 100px;
+    height: 37px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    margin-left: 5px;
+    background-color: orange;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+}

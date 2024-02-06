@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset='utf-8'>
+    <title>DoPlayList</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel="stylesheet" href="./css/main.css">
+
+</head>
+<script>
+    const submit = async function(){
+        const s = new Date().getTime();
+        const input = document.getElementById("link");
+        const value = input.value;
+        if(!value) return;
+        try {
+            const response = await fetch(`/getPlayList`,{
+                method:'POST',
+                body: value
+                });
+            if (!response.ok) {
+                throw new Error('서버 응답이 실패했습니다.');
+            }
+            const flag = await response.json();
+        } catch (error) {
+            console.error('DB 호출 중 오류가 발생했습니다.', error);
+        }
+        const e = new Date().getTime();
+        console.log("걸린 시간 : "+(e-s)/1000.0 +"초");
+
+        
+    }
+</script>
+<body>
+    <header>
+
+    </header>
+    <main>
+        <section class="lnb">
+
+        </section>
+        <section class="content">
+            <section class="section-input">
+                <div class="section-input-option">
+                    <div class="blank"></div>
+                    <div class="section-input-option-main">
+                        <div style="margin-left: 1px;"><span>링크</span></div>
+                        <div><span>타임스탬프</span></div>
+                    </div>
+                    <div class="blank"></div>
+                </div>
+                <div class="section-input-main flex-center">
+                    <div class="blank"></div>
+                    <input class="input-link" id="link">
+                    <div class="input-link-button" onclick="submit()"><span>SUBMIT</span></div>
+                    <div class="blank"></div>
+                </div>
+            </section>
+        </section>
+        <section class="rnb">
+
+        </section>
+    </main>
+    <footer>
+
+    </footer>
+</body>
+
+</html>
