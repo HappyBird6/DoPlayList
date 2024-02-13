@@ -8,6 +8,10 @@ header {
     width: 100vw;
     height: 10vh;
     background-color: rgb(83, 83, 83);
+    
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
 }
 main {
     height: 80vh;
@@ -28,6 +32,23 @@ footer {
     width: 250px;
     height: 100%;
     background-color: rgb(116, 116, 116);
+}
+.section-login{
+    width: 10%;
+    height: 60%;
+    margin-right: 20px;
+}
+.button-login{
+    width: 100%;
+    height: 100%;
+    background-color: aquamarine;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    font-weight: 700;
+    cursor: pointer;
 }
 .content{
     height: 100%;
