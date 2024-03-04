@@ -6,36 +6,62 @@
     <title>DoPlayList</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <link rel="stylesheet" href="./css/main.css">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></link>
 </head>
 <script>
-    const submit = async function(){
+    const submit = async function () {
+        let loading = document.getElementById("loading");
         const s = new Date().getTime();
         const input = document.getElementById("link");
         const value = input.value;
-        if(!value) return;
+        if (!value) return;
         try {
-            const response = await fetch(`/getPlayList`,{
-                method:'POST',
+            loading.classList.remove("disable");
+
+            const response = await fetch(`/getPlayList`, {
+                method: 'POST',
                 body: value
-                });
+            });
             if (!response.ok) {
                 throw new Error('서버 응답이 실패했습니다.');
             }
             const flag = await response.json();
+            const items = document.querySelector(".items");
+            for(var item in flag){
+                // console.log(flag[item]);
+                items.innerHTML += 
+                `<div class='item'>
+                    <div class='title-section'>
+                        <div class='index'><span>${item}</span></div>
+                        <div class='title'>
+                            <a href="https://www.youtube.com/results?search_query=${flag[item]}" target="_blank">
+                                ${flag[item]}
+                            </a>
+                        </div>
+                    </div>
+                    <div class='checkbox'>
+                        <i class='fa-regular fa-square'></i>
+                    </div>
+                </div>`;
+            }
         } catch (error) {
             console.error('DB 호출 중 오류가 발생했습니다.', error);
+        } finally{
+            const e = new Date().getTime();
+            // console.log("걸린 시간 : " + (e - s) / 1000.0 + "초");
+            let loading = document.getElementById("loading");
+            loading.classList.add("disable");
         }
-        const e = new Date().getTime();
-        console.log("걸린 시간 : "+(e-s)/1000.0 +"초");
-
-        
+    }
+    const login = async function () {
+        window.location.href = "https://accounts.google.com/o/oauth2/auth?access_type=offline&approval_prompt=force&client_id=48707345453-b5i5kn49fgqoievl0koq889r11rg3gom.apps.googleusercontent.com&redirect_uri=http://localhost:8080/login/oauth2/code/google&response_type=code&scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.force-ssl";
     }
 </script>
+
 <body>
     <header class="header">
         <div class="section-login">
-            <div class="button-login" onclick="">로그인</div>
+            <div class="button-login" onclick="login()">로그인</div>
         </div>
     </header>
     <main>
@@ -58,6 +84,39 @@
                     <div class="input-link-button" onclick="submit()"><span>SUBMIT</span></div>
                     <div class="blank"></div>
                 </div>
+            </section>
+            <section class="section-playlist">
+                <div class="section-playlist-show">
+                    <div style="display: flex;justify-content: center;">
+                        <span style="font-size: 25px; font-weight: 1000;">[ <span>PLAYLIST</span> ]</span>
+                        <div id="loading" class="disable loading"><i class="fa-solid fa-spinner fa-spin-pulse fa-rotate-90"></i></div>
+                    </div>
+                    <div class="items">
+                        <!-- <div class="item">
+                            <div class="title-section">
+                                <div class='index'><span>1</span></div>
+                                <div class='title'>가수-노래</div>
+                            </div>
+                            <div class='checkbox'><i class='fa-regular fa-square'></i></div>
+                        </div>
+                        <div class="item">
+                            <div class="title-section">
+                                <div class='index'><span>2</span></div>
+                                <div class='title'>가수-노래</div>
+                            </div>
+                            <div class='checkbox'><i class='fa-regular fa-square'></i></div>
+                        </div>
+                        <div class="item">
+                            <div class="title-section">
+                                <div class='index'><span>3</span></div>
+                                <div class='title'>가수-노래</div>
+
+                            </div>
+                            <div class='checkbox'><i class='fa-regular fa-square'></i></div>
+                        </div> -->
+                    </div>
+                </div>
+                <div class="section-playlist-selected"></div>
             </section>
         </section>
         <section class="rnb">

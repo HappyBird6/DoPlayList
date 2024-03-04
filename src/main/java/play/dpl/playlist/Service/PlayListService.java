@@ -189,8 +189,9 @@ public class PlayListService {
         WebElement element;
         List<String> titles;
         try {
-            WebDriverManager.chromedriver().setup();
+            WebDriverManager.chromedriver().create();
             driver = new ChromeDriver();
+
 
             driver.get(url);
 

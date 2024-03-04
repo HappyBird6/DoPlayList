@@ -1,8 +1,11 @@
-/* 구획 */
+.disable{
+    display: none !important;
+}
 body{
     display: flex;
     flex-direction: column;
     margin: 0;
+    overflow-x: hidden;
 }
 header {
     width: 100vw;
@@ -14,7 +17,7 @@ header {
     align-items: center;
 }
 main {
-    height: 80vh;
+    min-height: 80vh;
     display: flex;
     justify-content: center;
 }
@@ -37,6 +40,7 @@ footer {
     width: 10%;
     height: 60%;
     margin-right: 20px;
+    height: 60px;
 }
 .button-login{
     width: 100%;
@@ -51,7 +55,6 @@ footer {
     cursor: pointer;
 }
 .content{
-    height: 100%;
     background-color: rgb(146, 146, 146);
     width: 1000px;
 }
@@ -106,4 +109,65 @@ footer {
     font-size: 20px;
     font-weight: 600;
     cursor: pointer;
+}
+
+
+
+.section-playlist{
+    min-height: 600px;
+    background-color: rgb(255, 101, 101);
+    display: flex;
+    flex-direction: column;
+    padding : 10px 100px;
+}
+.section-playlist-show{
+    width: 100%;
+    height: calc(100% - 50px);
+    border: 2px solid #000000;
+    padding: 5px;
+
+}
+.section-playlist-show .item{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top:5px;
+    padding-bottom: 3px;
+}
+.section-playlist-selected{
+    width: 100%;
+    height: calc(100% - 50px);
+}
+#loading{
+    font-size: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 6px;
+    position: absolute;
+    margin-left: 200px;
+}
+.item .title-section{
+    font-weight: 700;
+    font-size: 20px;
+    display: flex;
+    
+}
+.item .title-section .index{
+    margin-right: 10px;
+}
+.item .title{
+    cursor: pointer;
+}
+.item .title a{
+    color:black;
+    text-decoration-line: none;
+}
+.item .title a:hover{
+    font-weight: 1000;
+    color: blueviolet;
+}
+.item .checkbox{
+    font-weight: 700;
+    font-size: 20px;
 }
