@@ -37,23 +37,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = null;
         String email = null;
-        String pw = null;
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("jwtTokenCookie")) {
+                if (cookie.getName().equals("jwtCookie")) {
                     // String cookieValue = cookie.getValue();
                     try {
                         token = cookie.getValue();
                         
                         email = jwtService.extractUsername(token);
-                        pw = jwtService.extractPassword(token);
-
                         cookie.setMaxAge(JwtService.JWT_EXPIRY_TIME); // 쿠키 시간 갱신
                     } catch (ExpiredJwtException expiredJwtException) {
                         // JWT가 만료된 경우 예외 처리
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        // response.getWriter().write("JWT is expired");
                         isTokenExpired = true;
                         // authentication 객체 지우기.
                         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

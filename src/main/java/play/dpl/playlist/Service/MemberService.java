@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,7 +21,6 @@ import play.dpl.playlist.Repository.MemberRepositoryImpl;
 public class MemberService implements UserDetailsService {
     @Autowired
     private MemberRepositoryImpl repository;
-
     private PasswordEncoder encoder = new BCryptPasswordEncoder();
     
     @Override

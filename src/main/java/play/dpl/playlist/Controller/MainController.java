@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,10 +13,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
 
 import com.google.gson.Gson;
 
 import jakarta.servlet.http.HttpServletResponse;
+import play.dpl.playlist.Entity.Member;
+import play.dpl.playlist.Service.MemberInfoDetails;
 import play.dpl.playlist.Service.PlayListService;
 import play.dpl.playlist.Service.YoutubeService;
 
@@ -29,9 +33,17 @@ public class MainController {
     YoutubeService youtubeService;
 
     @RequestMapping("/")
-    public String main() {
-        
-        return "index";
+    public ModelAndView main() {
+        ModelAndView mav = new ModelAndView("index");
+        if (!SecurityContextHolder.getContext().getAuthentication().getPrincipal().equals("anonymousUser")) {
+            Member member = ((MemberInfoDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+            .getMember();
+
+            System.out.println("ROLE : "+SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        }else{
+            System.out.println("로그인X");
+        }
+        return mav;
     }
 
     @PostMapping("/getPlayList")
