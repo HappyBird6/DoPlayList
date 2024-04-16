@@ -24,6 +24,12 @@ import com.google.api.services.youtube.model.ResourceId;
 import com.google.api.services.youtube.model.SearchListResponse;
 import com.google.gson.JsonObject;
 
+import play.dpl.playlist.Entity.Member;
+import play.dpl.playlist.Entity.Music;
+import play.dpl.playlist.Entity.MusicRequestHistory;
+import play.dpl.playlist.Entity.PlaylistRequestHistory;
+import play.dpl.playlist.Repository.MusicRequestHistoryRepository;
+import play.dpl.playlist.Repository.MusicRespository;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
@@ -34,9 +40,13 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -48,6 +58,11 @@ public class YoutubeService {
 
     private static final String APPLICATION_NAME = "DoPlayList";
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+
+    @Autowired
+    private MusicRespository musicRespository;
+    @Autowired
+    private MusicRequestHistoryRepository musicRequestHistoryRepository;
 
     public static Credential authorize(final NetHttpTransport httpTransport,String accessToken) throws IOException {
         // // Load client secrets.
@@ -111,13 +126,13 @@ public class YoutubeService {
         YouTube.Playlists.List request = youtubeService.playlists()
             .list("id,snippet");
         request.setFields("items(id,snippet(title)),pageInfo(totalResults,resultsPerPage),nextPageToken");
-        PlaylistListResponse response;
         request.setMaxResults(50L).setMine(true);
+        
 
         if(nextPageToken!=null){
             request.setPageToken(nextPageToken);
         }
-        response = request.execute();
+        PlaylistListResponse response = request.execute();
 
 
         List<Playlist> itemList = response.getItems();
@@ -125,6 +140,7 @@ public class YoutubeService {
             Playlist playList = itemList.get(i);
             String id = playList.getId();
             String title = playList.getSnippet().getTitle();
+            
             list.add(new String[]{id,title});
         }
 
@@ -134,7 +150,7 @@ public class YoutubeService {
         }
         return list;
     }
-    public boolean addMusicToPlayList(String accessToken,String playlistId, String videoId)
+    public boolean addMusicToPlayList(String accessToken,String playlistId, Music music)
         throws GeneralSecurityException, IOException, GoogleJsonResponseException {
         
         try{
@@ -148,18 +164,38 @@ public class YoutubeService {
             snippet.setPlaylistId(playlistId);
     
             ResourceId resourceId = new ResourceId();
-            resourceId.setVideoId(videoId);
+            resourceId.setVideoId(music.getId());
             resourceId.setKind("youtube#video");
             snippet.setResourceId(resourceId);
-    
             playlistItem.setSnippet(snippet);
-    
             // Define and execute the API request
             YouTube.PlaylistItems.Insert request = youtubeService.playlistItems()
                 .insert("snippet", playlistItem);
             request.setFields("snippet(title)");
             PlaylistItem response = request.execute();
             System.out.println(response.getSnippet().getTitle()+"이 재생목록에 추가되었습니다.");
+            if(musicRespository.existsById(music.getId())){
+                musicRespository.updateRequestCount(music.getId());                
+            }else{
+                music.setRequestCount(1l);
+                musicRespository.save(music);
+            }
+
+            MusicRequestHistory mrh = new MusicRequestHistory();
+            Member member = ((MemberInfoDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getMember();
+            Optional<Long> tempMaxId = musicRequestHistoryRepository.findMaxId();
+            if(tempMaxId.isPresent()){
+                mrh.setId(tempMaxId.get()+1);
+            }else{
+                mrh.setId(1l);
+            }
+            mrh.setMemberId(member.getEmail());
+            mrh.setMusicId(music.getId());
+            mrh.setPlaylistId(playlistId);
+            mrh.setRequestAt(new Date());
+            
+            musicRequestHistoryRepository.save(mrh);
+
             return true;    
         }catch(Exception e){
             System.out.println("재생목록에 추가 실패");

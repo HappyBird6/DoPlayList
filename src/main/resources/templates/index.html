@@ -6,126 +6,325 @@
     <title>DoPlayList</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <link rel="stylesheet" href="./css/main.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></link>
-</head>
-<script>
-    const submit = async function () {
-        let loading = document.getElementById("loading");
-        const s = new Date().getTime();
-        const input = document.getElementById("link");
-        const value = input.value;
-        if (!value) return;
-        try {
-            loading.classList.remove("disable");
+    <link rel="stylesheet" href="./css/scrollbar.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
-            const response = await fetch(`/getPlayList`, {
-                method: 'POST',
-                body: value
-            });
-            if (!response.ok) {
-                throw new Error('서버 응답이 실패했습니다.');
-            }
-            const flag = await response.json();
-            const items = document.querySelector(".items");
-            for(var item in flag){
-                // console.log(flag[item]);
-                items.innerHTML += 
-                `<div class='item'>
-                    <div class='title-section'>
-                        <div class='index'><span>${item}</span></div>
-                        <div class='title'>
-                            <a href="https://www.youtube.com/results?search_query=${flag[item]}" target="_blank">
-                                ${flag[item]}
-                            </a>
-                        </div>
-                    </div>
-                    <div class='checkbox'>
-                        <i class='fa-regular fa-square'></i>
-                    </div>
-                </div>`;
-            }
-        } catch (error) {
-            console.error('DB 호출 중 오류가 발생했습니다.', error);
-        } finally{
-            const e = new Date().getTime();
-            // console.log("걸린 시간 : " + (e - s) / 1000.0 + "초");
-            let loading = document.getElementById("loading");
-            loading.classList.add("disable");
-        }
-    }
-    const login = async function () {
-        window.location.href = "https://accounts.google.com/o/oauth2/auth?access_type=offline&approval_prompt=force&client_id=48707345453-b5i5kn49fgqoievl0koq889r11rg3gom.apps.googleusercontent.com&redirect_uri=http://localhost:8080/login/oauth2/code/google&response_type=code&scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.force-ssl";
-    }
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.min.js"></script>
+
+    <script src='./js/DOMContentLoaded.js'></script>
+    <script src='./js/main.js'></script>
+    <script src='./js/AsyncTaskQueue.js'></script>
+</head>
+<script th:inline="javascript">
+    playlistList = /*[[${playlistList}]]*/{};
 </script>
 
 <body>
-    <header class="header">
-        <div class="section-login">
-            <div class="button-login" onclick="login()">로그인</div>
-        </div>
-    </header>
+
     <main>
         <section class="lnb">
+            <div class="section-logo">
+                <div class="logo-header">
+                    <div id="logo-circle"></div>
+                    <div id="logo-cover">
+                        <div id="logo-cover-1">
+                            <div id="logo-cover-11"></div>
+                            <div id="logo-cover-12"></div>
+                        </div>
+                        <div id="logo-cover-2">
+                            <div id="logo-cover-21"></div>
+                            <div id="logo-cover-22"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="logo-main">
+                    <div id="logo">
+                        <span class="logo-title">DO PLAYLIST</span>
+                        <div class="copyright">
+                            <a title="클릭 시 해당 사이트로 이동합니다." href="https://pixabay.com/ko/users/vika_glitter-6314823/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=7102511"  target="_blank">
+                                <div class="k"><span>배경화면 : </span></div>
+                                <span>Designed by Victoria in 2022. Published by Pixabay</span>
+                            </a>
+                            <a title="클릭 시 해당 사이트로 이동합니다." href="https://www.ownglyph.com/trial/0524a5cc-b4c3-40bc-9122-ea12546a6772"  target="_blank">
+                                <div class="k"><span>폰트 : </span></div>
+                                <span>Designed by NAN*** in 2023. Published by Ownglyph</span>
+                            </a>
+                        </div>
 
+                    </div>
+                </div>
+            </div>
+            <div class="section-login">
+                <th:section th:unless="${email}">
+                    <div class="button-login" onclick="login()">
+                        <span><img src="./img/google.png" /></span>
+                        <span>SIGN IN WITH GOOGLE</span>
+                    </div>
+                </th:section>
+                <th:section th:if="${email}">
+                    <div class="section-login-info">
+                        <div class="email"><span th:text="${email}"></span></div>
+                        <div style="    display: flex;
+                        justify-content: flex-end;"><span style="height: 17px;"><a style="text-decoration: none; color:black; font-size:17px" href="/logout">로그아웃</a></span></div>
+                        <div class="user-menu">
+                            <div class="btn" onclick="openUserMenu(this)" data-type="p">
+                                <span class="icon check"><i class="fa-solid fa-bars"></i></span>
+                                <span>내 재생목록</span>
+                            </div>
+                            <div class="btn" onclick="openUserMenu(this)" data-type="h">
+                                <span class="icon "><i class="fa-regular fa-clock"></i></span>
+                                <span>히스토리</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-member-list" id="playlist">
+                        <div class="content">
+                            <div class="playlist" th:if="${playlistList}" th:each="playlist,iter : ${playlistList}">
+                                <a th:href="'https://www.youtube.com/playlist?list=' + ${playlist.value}"
+                                    target="_blank">
+                                    <div><span th:text="${iter.index + 1} + '. '"></span></div>
+                                    <div th:text="${playlist.key}"></div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="footer"><span class=" " onclick="refreshPlaylist(this)">새로고침</span></div>
+                        <div class="expand" onclick="expandUserMenu(this)" data-status="closed"><span><i
+                                    class="fa-solid fa-chevron-right"></i></span></div>
+                    </div>
+                    <div class="section-member-list disable" id="history">
+                        <div class="content">
+                            <div class="playlist" th:if="${history}" th:each="playlist,iter : ${history}">
+                                <a th:href="'https://www.youtube.com/watch?v=' + ${playlist[0]}" target="_blank">
+                                    <div style="height:16px; margin-right:5px"><span><i
+                                                class="fa-solid fa-music"></i></span></div>
+                                    <div th:text="${playlist[1]}"></div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="expand" onclick="expandUserMenu(this)" data-status="closed"><span><i
+                                    class="fa-solid fa-chevron-right"></i></span></div>
+                    </div>
+                </th:section>
+            </div>
+            <div class="section-menu">
+                <div class="menu highligted">플리 추출</div>
+                <!-- <div class="menu">메뉴 2</div> -->
+                <!-- <div class="menu">메뉴 3</div> -->
+                <!-- <div class="menu">메뉴 4</div> -->
+            </div>
         </section>
-        <section class="content">
+        <section class="menu-1">
             <section class="section-input">
+                <span class="btn-clearLink" onclick="clearLink()"><i class="fa-regular fa-trash-can"></i></span>
                 <div class="section-input-option">
                     <div class="blank"></div>
                     <div class="section-input-option-main">
-                        <div style="margin-left: 1px;"><span>링크</span></div>
-                        <div><span>타임스탬프</span></div>
+                        <div class="info"><span>링크</span><span><i class="fa-solid fa-arrow-down"></i></span></div>
                     </div>
                     <div class="blank"></div>
                 </div>
                 <div class="section-input-main flex-center">
                     <div class="blank"></div>
-                    <input class="input-link" id="link">
-                    <div class="input-link-button" onclick="submit()"><span>SUBMIT</span></div>
+                    <div style="width: 100%;">
+                        <input class="input-link" id="link" placeholder="https://www.youtube.com/watch?v=ImqDaISiOac">
+                        <div th:if="${history}" id="linkHistoryContainer">
+                            <div class="playlist" th:if="${history}" th:each="playlist,iter : ${history}">
+                                <div th:text="${playlist[1]}" th:onclick="fillLink('https://www.youtube.com/watch?v=' + [[${playlist[0]}]])"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-link-button" onclick="submitLink()"><span>제&nbsp;출</span></div>
                     <div class="blank"></div>
                 </div>
             </section>
             <section class="section-playlist">
-                <div class="section-playlist-show">
-                    <div style="display: flex;justify-content: center;">
-                        <span style="font-size: 25px; font-weight: 1000;">[ <span>PLAYLIST</span> ]</span>
-                        <div id="loading" class="disable loading"><i class="fa-solid fa-spinner fa-spin-pulse fa-rotate-90"></i></div>
+                <div class="swiper">
+                    <div class="swiper-header flex-center">
+                        <div class="swiper-button-prev"><i class="fa-solid fa-circle-chevron-right fa-rotate-180"></i>
+                        </div>
+                        <div class="swiper-scrollbar">
+                            <div class="swiper-scrollbar-drag-background">STEP 1</div>
+                            <div class="swiper-scrollbar-drag-background">STEP 2
+                                <span class="exclamation disable"><i class="fa-solid fa-circle-exclamation"></i></span>
+                            </div>
+                            <div class="swiper-scrollbar-drag-background">STEP 3</div>
+                        </div>
+                        <div class="swiper-button-next"><i class="fa-solid fa-circle-chevron-right"></i></div>
                     </div>
-                    <div class="items">
-                        <!-- <div class="item">
-                            <div class="title-section">
-                                <div class='index'><span>1</span></div>
-                                <div class='title'>가수-노래</div>
+                    <div class="swiper-wrapper">
+                        <!-- Slides -->
+                        <div class="swiper-slide section-playlist-show">
+                            <div class="slide-header">
+                                <div class="disable loading">
+                                    <!-- <i class="fa-solid fa-spinner fa-spin-pulse fa-rotate-90"></i> -->
+
+                                    <div class="rect1"></div>
+                                    <div class="rect2"></div>
+                                    <div class="rect3"></div>
+                                    <div class="rect4"></div>
+                                    <div class="rect5"></div>
+                                </div>
+                                <div class="slide-header-side left bottom"></div>
+                                <span>[ <span>PLAYLIST</span> ]</span>
+                                <div class="slide-header-side right bottom">
+                                    <div class="clear-list" id="btn-clear">
+
+                                        <span>리스트 비우기</span>
+                                        <i class="fa-solid fa-trash"></i>
+                                        <div class="clear-check disable" id="clearCheckCover">
+                                            <span>꾹 눌러서</span>
+                                            <span>리스트 비우기</span>
+                                        </div>
+                                        <div class="clear-check-fill" id="clearCheckFill">
+
+                                        </div>
+                                    </div>
+                                    <div class="divider"></div>
+                                    <div class="japanese-check">
+                                        <div>일식이면 체크</div>
+                                        <div>
+                                            <span onclick="checkJP(this)" data-check='N'><i
+                                                    class="fa-regular fa-square"></i></span>
+                                            <span onclick="checkJP(1)"><i
+                                                    class="fa-regular fa-square-check disable"></i></span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class='checkbox'><i class='fa-regular fa-square'></i></div>
-                        </div>
-                        <div class="item">
-                            <div class="title-section">
-                                <div class='index'><span>2</span></div>
-                                <div class='title'>가수-노래</div>
-                            </div>
-                            <div class='checkbox'><i class='fa-regular fa-square'></i></div>
-                        </div>
-                        <div class="item">
-                            <div class="title-section">
-                                <div class='index'><span>3</span></div>
-                                <div class='title'>가수-노래</div>
+                            <div class="items-container">
+                                <div class="items">
+
+
+                                </div>
 
                             </div>
-                            <div class='checkbox'><i class='fa-regular fa-square'></i></div>
-                        </div> -->
+
+                        </div>
+                        <div class="swiper-slide section-selected">
+                            <div class="slide-header">
+                                <div class="disable loading">
+                                    <!-- <i class="fa-solid fa-spinner fa-spin-pulse fa-rotate-90"></i> -->
+                                    <div class="rect1"></div>
+                                    <div class="rect2"></div>
+                                    <div class="rect3"></div>
+                                    <div class="rect4"></div>
+                                    <div class="rect5"></div>
+                                </div>
+                                <div class="slide-header-side left bottom"></div>
+                                <span>[ <span>SELECTED</span> ]</span>
+                                <div class="slide-header-side right bottom">
+                                    <div th:if=${playlistList} class="btn-selected" onclick="submitSelection()"><span>선택
+                                            완료</span></div>
+                                </div>
+                            </div>
+                            <div class="items-container">
+                                <div class="items"></div>
+                            </div>
+                        </div>
+                        <div class="swiper-slide section-result">
+                            <div class="slide-header">
+                                <div class="slide-header-side left bottom"></div>
+                                <span>[ <span>RESULT</span> ]</span>
+                                <div class="slide-header-side right bottom"></div>
+                            </div>
+                            <div class="items-container">
+                                <div class="items"></div>
+                            </div>
+                            <div class="survey">
+                                <div class="survey-header">SURVEY</div>
+                                <div class="survey-main">
+                                    <div class="survey-main-side"><span>추천</span></div>
+                                    <div class="icon like">
+                                        <span onclick="vote(0)" data-enable="Y">
+                                            <i class="fa-regular fa-thumbs-up"></i>
+                                        </span>
+                                    </div>
+                                    <div class="blank" style="width: 20px;"></div>
+                                    <div class="icon dislike">
+                                        <span onclick="vote(1)" data-enable="Y">
+                                            <i class="fa-regular fa-thumbs-up fa-rotate-180"></i>
+                                        </span>
+                                    </div>
+                                    <div class="survey-main-side"><span>비추천</span></div>
+                                    <div class="survey-user-opinion disable">
+                                        <div data-check="N">
+                                            <span class="check-box" onclick="checkVote(this)" data-enable="Y">
+                                                <i class="fa-regular fa-square"></i>
+                                                <i class="fa-regular fa-square-check disable"></i>
+                                            </span>
+                                            <span>부정확함</span>
+                                        </div>
+                                        <div data-check="N">
+                                            <span class="check-box" onclick="checkVote(this)" data-enable="Y">
+                                                <i class="fa-regular fa-square"></i>
+                                                <i class="fa-regular fa-square-check disable"></i>
+                                            </span>
+                                            <span>불편함</span>
+                                        </div>
+                                        <div data-check="N">
+                                            <span class="check-box" onclick="checkVote(this)" data-enable="Y">
+                                                <i class="fa-regular fa-square"></i>
+                                                <i class="fa-regular fa-square-check disable"></i>
+                                            </span>
+                                            <span>기타</span>
+                                            <input class="input-etc">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="survey-footer">
+                                    <div>
+                                        <span class="thx disable">감사합니다.</span>
+                                    </div>
+                                    <div>
+                                        <div class="btn-survey disable" onclick="submitSurvey()">제&nbsp;출</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="section-playlist-selected"></div>
+            </section>
+            <section>
+
             </section>
         </section>
         <section class="rnb">
+            <div class="notice">
+                <div><span>하나의 플레이리스트 영상에서 노래를 추출</span></div>
+                <div><span>자신의 재생목록에 추가</span></div>
+                <div style="height:15px"></div>
+                <div><span>[ 사용법 ]</span></div>
+                <div><div class="aa"><span>0. </span></div><span>구글 로그인</span></div>
+                <div><div class="aa"><span>1. </span></div><span>플리 링크 입력</span></div>
+                <div><div class="aa"><span>2. </span></div><span>원하는 노래 플러스 버튼 </span></div>
+                <div><div class="aa"><span>3. </span></div><span>STEP2에서 원하는 노래 맞는지<br/>체크 후 재생목록 선택</span></div>
+                <div><div class="aa"><span>4. </span></div><span>최종 결정 후 제출</span></div>
+                
+                <div style="height:15px"></div>
+                
+                <div><span>[ 주의사항 ]</span></div>
+                <div><div class="aa"><span>1. </span></div><span>댓글 혹은 영상에 타임스탬프 필요 </span></div>
+                <div><div class="aa"><span>2. </span></div><span>타임스탬프에 직관적인 가수, 제목 필요 </span></div>
+                <div><div class="aa"><span>3. </span></div><span>일식은 노래 추가하기전에<br/>일식 체크하고 추가</span></div>
+                
+                <div style="height:15px"></div>
+                <div style="height:15px"></div>
+                
+                <div><span>[ 기타 ]</span></div>
+                <div><div class="aa"><span>1. </span></div><span>SELENIUM JAVA와<br/>YOUTUBE DATA API를 이용</span></div>
+                <div><div class="aa"><span>2. </span></div><span>문의 및 피드백 : wsbg6006@gmail.com</span></div>
+                
+                <div style="height:15px"></div>
 
+                <div><span>[ 문서 ]</span></div>
+                <div><div class="aa"><span>1. </span></div><a th:href="@{/PrivacyAgreement}"><span>개인정보 처리 약관</span></a></div>
+                <div><div class="aa"><span>2. </span></div><a th:href="@{/PrivacyPolicy}"><span>개인정보 보호 정책</span></a></div>
+            </div>
         </section>
     </main>
-    <footer>
-
-    </footer>
 </body>
 
 </html>

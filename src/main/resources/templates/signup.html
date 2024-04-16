@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .signupBox {
+            border: 1px solid black;
+            width: 70vw;
+            height: 400px;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            padding: 5px;
+        }
+
+        .blank {
+            height: 50px;
+        }
+
+        .header {
+            height: 60px;
+        }
+
+        .agreementBox { 
+
+            height: 70px;
+            width: 224px;
+            background-color: white;
+            border: 1px solid black;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-size: 30px;
+            cursor: pointer;
+        }
+        .gohome{
+            width: 100%;
+            display: flex;
+
+        }
+        .gohome a{
+            text-decoration: none;
+            color: black;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="gohome"><span><a href="/">메인 돌아가기</a></span></div>
+    <div class="header">서비스 이용을 위해 약관에 동의 해 주세요.</div>
+    <div th:replace="~{PrivacyPolicy :: PrivacyPolicy}"></div>
+    <div class="blank"></div>
+    <div th:replace="~{PrivacyAgreement :: PrivacyAgreement}"></div>
+    <div>
+        <div class="agreementBox" onclick="agreePolicy()"><span>동&nbsp;의</span></div>
+    </div>
+    <!-- <div>푸터</div> -->
+</body>
+
+<script th:inline="javascript">
+    var email = /*[[${email}]]*/'none';
+    const agreePolicy = async function(){
+        document.querySelector(".agreementBox").onclick = function(){
+            return false;
+        }
+        const response = await fetch(`/login/oauth2/signupOk`, {
+            method: 'POST',
+            body:email,
+        });
+        if (!response.ok) {
+            throw new Error('서버 응답이 실패했습니다.');
+        }
+        const flag = await response.json();
+        console.log(flag);
+        switch(flag){
+            case "0":
+                alert("동의 하셨습니다.");
+                break;
+            case "1":
+                alert("시간 초과. 다시 시도해주세요.");
+                break;
+        }
+        window.location.href="/";
+    }
+</script>
+</html>

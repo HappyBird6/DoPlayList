@@ -1,30 +1,40 @@
 package play.dpl.playlist.Service;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import com.google.gson.Gson;
+
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import play.dpl.playlist.Entity.Member;
+import play.dpl.playlist.Entity.Music;
+import play.dpl.playlist.Entity.Playlist;
+import play.dpl.playlist.Entity.PlaylistRequestHistory;
+import play.dpl.playlist.Repository.PlaylistRepository;
+import play.dpl.playlist.Repository.PlaylistRequestHistoryRepository;
 
 @Service
-public class PlayListService {
-    @Value("${youtube.data.api.key}")
-    String youtubeAPIkey;
+public class PlaylistService {
+    
+    @Autowired
+    private PlaylistRepository playlistRepository;
+    @Autowired
+    private PlaylistRequestHistoryRepository playlistRequestHistoryRepository;
+
 
     private List<String> scrapChapter(ChromeDriver driver) {
         System.out.println("챕터 스크랩 시작");
@@ -34,7 +44,11 @@ public class PlayListService {
         if (!chapters.isEmpty()) {
             for (var chapter : chapters) {
                 String title = chapter.getAttribute("title");
-                titles.add(removeSpecialCharacters(title));
+                
+                title = removeSpecialCharacters(title).trim();
+                if (!titles.contains(title) && !title.isEmpty()) {
+                    titles.add(title);
+                }
             }
         } else {
             System.out.println("챕터 없음");
@@ -64,8 +78,9 @@ public class PlayListService {
                         if (title.contains("\n")) {
                             title = title.substring(0, title.indexOf("\n"));
                         }
-                        if (!titles.contains(removeSpecialCharacters(title))) {
-                            titles.add(removeSpecialCharacters(title));
+                        title = removeSpecialCharacters(title).trim();
+                        if (!titles.contains(title) && !title.isEmpty()) {
+                            titles.add(title);
                         }
                         isTitle = false;
                     }
@@ -92,12 +107,12 @@ public class PlayListService {
         int count = 0;
         while (count < 10) {
             try {
-                js.executeScript("window.scrollBy(0,500)");
-                Thread.sleep(500);
+                js.executeScript("window.scrollBy(0,300)");
+                Thread.sleep(1000);
                 element = driver
                         .findElement(By.cssSelector("#contents > ytd-comment-thread-renderer:nth-child(1)"));
                 element.findElement(By.cssSelector("#more > span")).click();
-                Thread.sleep(50);
+                Thread.sleep(100);
                 firstCommentContent = element.findElements(By.className("yt-formatted-string"));
                 if (!firstCommentContent.isEmpty())
                     break;
@@ -120,8 +135,10 @@ public class PlayListService {
                         if (title.contains("\n")) {
                             title = title.substring(0, title.indexOf("\n"));
                         }
-                        if (!titles.contains(removeSpecialCharacters(title))) {
-                            titles.add(removeSpecialCharacters(title));
+                        
+                        title = removeSpecialCharacters(title).trim();
+                        if (!titles.contains(title) && !title.isEmpty()) {
+                            titles.add(title);
                         }
                         isTitle = false;
                     }
@@ -151,8 +168,8 @@ public class PlayListService {
                                 "video-attribute-view-model-c3 > div > a > div.yt-video-attribute-view-model__metadata > h4"))
                                 .getText();
                         String tmp = removeSpecialCharacters(singer + " - " + title);
-                        
-                        if (!titles.contains(tmp) && !title.isBlank() && !singer.isBlank()) {
+                        title = title.trim();
+                        if (!titles.contains(tmp) && !title.isBlank() && !singer.isBlank() && !title.isEmpty()) {
                             titles.add(tmp);
                         }
                     }
@@ -183,16 +200,58 @@ public class PlayListService {
         }
         return titles;
     }
+    
+    private Playlist getData(ChromeDriver driver) throws InterruptedException{
+        Playlist playlist = new Playlist();
+        while(true){
+            try{
+                playlist.setYtChannel(driver.findElement(By.xpath("/html/body/ytd-app/div[1]/ytd-page-manager/ytd-watch-flexy/div[5]/div[1]/div/div[2]/ytd-watch-metadata/div/div[2]/div[1]/ytd-video-owner-renderer/div[1]/ytd-channel-name/div/div/yt-formatted-string/a")).getText());
+                playlist.setYtTitle(driver.findElement(By.xpath("/html/body/ytd-app/div[1]/ytd-page-manager/ytd-watch-flexy/div[5]/div[1]/div/div[2]/ytd-watch-metadata/div/div[1]/h1/yt-formatted-string")).getText());
+                playlist.setYtPostDate(driver.findElement(By.xpath("/html/body/ytd-app/div[1]/ytd-page-manager/ytd-watch-flexy/div[5]/div[1]/div/div[2]/ytd-watch-metadata/div/div[4]/div[1]/div/ytd-watch-info-text/div/yt-formatted-string/span[3]")).getText());
+                break;
+            }catch(Exception e){
+                Thread.sleep(100);
+            }
+        }
+        return playlist;          
+    }
+    private String isOneSinger(String title){
+        List<String> keywords = Arrays.asList("노래 모음","노래모음");
 
-    public List<String> scrapPage(String url) {
-        ChromeDriver driver = null;
+        String singer = null;
+        for(int i =0;i<keywords.size();i++){
+            String keyword = keywords.get(i);
+            System.out.println("키워드 : "+keyword+"에 대한 검사");
+            if(title.contains(keyword)){
+                System.out.println("타이틀이 키워드 --"+keyword+"-- 를 포함");
+                int endIndex = title.indexOf(keyword);
+                int startIndex = 0;
+                boolean skip = true;
+                for(int j = endIndex-1;j>0;j--){
+                    char c = title.charAt(j);
+                    System.out.println(j+"인덱스의 캐릭터 : "+c);
+                    if(!Character.isWhitespace(c) && Character.isLetterOrDigit(c)) skip = false;
+
+                    if(Character.isWhitespace(c) || !Character.isLetterOrDigit(c)) {
+                        if(skip) continue;
+                        startIndex = j;
+                        break;
+                    }
+                }
+                singer = title.substring(startIndex, endIndex).trim();
+                break;
+            }
+        }
+        return singer;
+    }
+    public Playlist scrapPage(String url) {
+        ChromeDriver driver = new ChromeDriver();
         WebElement element;
+        Playlist playlist;
+        
         List<String> titles;
         try {
-            WebDriverManager.chromedriver().create();
-            driver = new ChromeDriver();
-
-
+            // WebDriverManager.chromedriver().create();
             driver.get(url);
 
             Thread.sleep(1000); // 페이지 로딩 대기시간
@@ -207,29 +266,80 @@ public class PlayListService {
                 }
             }
             Thread.sleep(100);
+            // 0. 기본 정보 체크
+            playlist = getData(driver);
+            // String singer = isOneSinger(playlist.getYtTitle());
+            String singer = null;
+
+            playlist.setId(extractVideoIdFromUrl(url));
+            
             // 2. 챕터가 있으면 스크래핑
             titles = scrapChapter(driver);
             if (titles != null) {
                 driver.quit();
-                return titles;
+                String commonPrefix = findCommonPrefix(titles,0);
+                if(commonPrefix!=null){
+                    titles = removeCommonPrefix(titles, commonPrefix);
+                }
+                // if(singer!=null){
+                //     for(int i =0;i<titles.size();i++){
+                //         titles.set(i,singer+" - "+titles.get(i));
+                //     }
+                // }
+                String titlesJson = new Gson().toJson(titles);
+                playlist.setYtMusicTitlesJson(titlesJson);
+                return playlist;
             }
             // 3. 더보기란에 주인장이 올린 타임라인 분석
             titles = scrapExpand(driver);
             if (titles != null) {
                 driver.quit();
-                return titles;
+                String commonPrefix = findCommonPrefix(titles,0);
+                if(commonPrefix!=null){
+                    titles = removeCommonPrefix(titles, commonPrefix);
+                }
+                // if(singer!=null){
+                //     for(int i =0;i<titles.size();i++){
+                //         titles.set(i,singer+" - "+titles.get(i));
+                //     }
+                // }
+                String titlesJson = new Gson().toJson(titles);
+                playlist.setYtMusicTitlesJson(titlesJson);
+                return playlist;
             }
             // 4. 첫번째 댓글 타임라인 분석
             titles = scrapFirstComment(driver);
             if (titles != null) {
                 driver.quit();
-                return titles;
+                String commonPrefix = findCommonPrefix(titles,0);
+                if(commonPrefix!=null){
+                    titles = removeCommonPrefix(titles, commonPrefix);
+                }
+                // if(singer!=null){
+                //     for(int i =0;i<titles.size();i++){
+                //         titles.set(i,singer+" - "+titles.get(i));
+                //     }
+                // }
+                String titlesJson = new Gson().toJson(titles);
+                playlist.setYtMusicTitlesJson(titlesJson);
+                return playlist;
             }
             // 5. 더보기 안의 음악란에만 표시된 음악만 표기
             titles = scrapMusic(driver);
             if (titles != null) {
                 driver.quit();
-                return titles;
+                String commonPrefix = findCommonPrefix(titles,0);
+                if(commonPrefix!=null){
+                    titles = removeCommonPrefix(titles, commonPrefix);
+                }
+                // if(singer!=null){
+                //     for(int i =0;i<titles.size();i++){
+                //         titles.set(i,singer+" - "+titles.get(i));
+                //     }
+                // }
+                String titlesJson = new Gson().toJson(titles);
+                playlist.setYtMusicTitlesJson(titlesJson);
+                return playlist;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -258,92 +368,151 @@ public class PlayListService {
 
         return cleanedString;
     }
-    public String requestCaptionsId(String videoId) {
-        String captionsId = null;
-        try {
-            String apiUrl = "https://www.googleapis.com/youtube/v3/captions";
-            URI uri = URI.create(apiUrl + "?part=snippet&videoId=" + videoId + "&key=" + youtubeAPIkey);
-
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder().uri(uri).build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                String responseData = response.body();
-                // JSON 파싱
-                JSONObject json = new JSONObject(responseData);
-
-                // "items" 배열에서 첫 번째 아이템을 가져옴
-                JSONArray itemsArray = json.getJSONArray("items");
-                JSONObject firstItem = itemsArray.getJSONObject(0);
-
-                // "id" 값을 추출
-                captionsId = firstItem.getString("id");
-
-                System.out.println("Response: " + responseData);
-            } else {
-                System.out.println("Failed to retrieve video information. Status code: " + response.statusCode());
-            }
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-        System.out.println("CaptionsId : " + captionsId);
-        return captionsId;
-    }
-
-    public void requestCaptions(String captionsId) {
-        try {
-            String apiUrl = "https://www.googleapis.com/youtube/v3/captions/" + captionsId + "?key=" + youtubeAPIkey;
-            URI uri = URI.create(apiUrl);
-
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder().uri(uri).build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                String responseData = response.body();
-                System.out.println("Response: " + responseData);
-            } else {
-                System.out.println("Failed to retrieve video information. Status code: " + response.statusCode());
-            }
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void requestVideoData(String videoId) {
-        // String videoId = "fDxVNLUG-K8";
-        // API 요청을 보내고 응답을 처리합니다.
-        System.out.println("requestVideoData / videoId : " + videoId);
-        try {
-            String apiUrl = "https://www.googleapis.com/youtube/v3/videos";
-            URI uri = URI.create(apiUrl + "?part=snippet,contentDetails&id=" + videoId + "&key=" + youtubeAPIkey);
-
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder().uri(uri).build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                String responseData = response.body();
-                System.out.println("Response: " + responseData);
-            } else {
-                System.out.println("Failed to retrieve video information. Status code: " + response.statusCode());
-            }
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
 
     public String extractVideoIdFromUrl(String url) {
         // https://www.youtube.com/watch?v=fDxVNLUG-K8&list=WL&index=3&t=1049s
+        // https://youtu.be/xbc6eDHmXkE?si=5Iv50p8z5Mk59WU8
+        
         String videoId = null;
-        int startIndex = url.indexOf("?v=");
-        int endIndex = url.indexOf("&", startIndex);
-        if (endIndex == -1)
+        int startIndex = 0;
+        int endIndex = -1;
+        int addIndex = 0;
+        if(url.contains("youtu.be/")){
+            startIndex = url.indexOf("youtu.be/");
+            endIndex = url.indexOf("?",startIndex);
+            addIndex = 9;
+        }else{
+            startIndex = url.indexOf("?v=");
+            endIndex = url.indexOf("&", startIndex);
+            addIndex = 3;
+        }
+        if(startIndex==0) return null;
+        if(endIndex==-1){
             endIndex = url.length();
+        }
 
-        videoId = url.substring(startIndex + 3, endIndex);
+        videoId = url.substring(startIndex + addIndex, endIndex);
 
         return videoId;
+    }
+
+    public Music getMusicData(String title, String type){
+        /*
+         * type
+         * 0 : default
+         * 1 : 일식
+         */
+        String suffix = "";
+        if(type.equals("0")){
+            suffix = "\"Auto-generated\"";
+        }else if(type.equals("1")){
+            suffix = "\"Official\"";
+        }
+
+        ChromeDriver driver = new ChromeDriver();
+        WebElement element;
+        Music music = null;
+        try {
+            // WebDriverManager.chromedriver().create();
+            driver.get("http://www.youtube.com/results?search_query="+title.trim()+" "+suffix+"&sp=CAM%253D");
+
+            Thread.sleep(1000); // 페이지 로딩 대기시간
+            Long s = new Date().getTime();
+            while (true) {
+                Long e = new Date().getTime();
+                if(e-s>5000) break;
+                try {
+                    element = driver.findElement(By.xpath("/html/body/ytd-app/div[1]/ytd-page-manager/ytd-search/div[1]/ytd-two-column-search-results-renderer/div/ytd-section-list-renderer/div[2]/ytd-item-section-renderer/div[3]/ytd-video-renderer[1]/div[1]/ytd-thumbnail/a"));
+                    String link = element.getAttribute("href");
+                    String videoId = extractVideoIdFromUrl(link);
+                    if(videoId==null) return null;
+                    element = driver.findElement(By.xpath("/html/body/ytd-app/div[1]/ytd-page-manager/ytd-search/div[1]/ytd-two-column-search-results-renderer/div/ytd-section-list-renderer/div[2]/ytd-item-section-renderer/div[3]/ytd-video-renderer[1]/div[1]/div/div[1]/div/h3/a/yt-formatted-string"));
+                    String ytTitle = element.getText();
+                    element = driver.findElement(By.xpath("/html/body/ytd-app/div[1]/ytd-page-manager/ytd-search/div[1]/ytd-two-column-search-results-renderer/div/ytd-section-list-renderer/div[2]/ytd-item-section-renderer/div[3]/ytd-video-renderer[1]/div[1]/div/div[2]/ytd-channel-name/div/div/yt-formatted-string/a"));
+                    String ytChannel = element.getText();
+                    
+                    music = Music.builder()
+                                    .id(videoId)
+                                    .ytChannel(ytChannel)
+                                    .ytTitle(ytTitle)
+                                    .build();
+
+                    // 썸네일 데이터 추가 : "https://i1.ytimg.com/vi/"+videoId+"/default.jpg"
+                    // 링크 : "https://www.youtube.com/watch?v="+videoId
+                    
+                    break;
+                } catch (Exception err) {
+                    Thread.sleep(100);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            // 브라우저 종료
+            driver.quit();
+        }
+
+        return music;
+    }
+   
+    public Playlist getPlaylist(String url){
+        String videoId = extractVideoIdFromUrl(url);
+
+        // 플리 저장
+        Playlist playlist = new Playlist();
+        Optional<Playlist> temp = playlistRepository.findById(videoId);
+        if(temp.isPresent()){
+            playlist = temp.get();
+            playlistRepository.updateRequestCount(playlist.getId());
+        }else{
+            playlist = scrapPage(url);
+            playlist.setRequestCount(1l);
+            playlistRepository.save(playlist);
+        }
+        // 리퀘스트 저장
+        PlaylistRequestHistory prh = new PlaylistRequestHistory();
+        Member member = ((MemberInfoDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getMember();
+        Optional<Long> tempMaxId = playlistRequestHistoryRepository.findMaxId();
+        if(tempMaxId.isPresent()){
+            prh.setId(tempMaxId.get()+1);
+        }else{
+            prh.setId(1l);
+        }
+        prh.setMemberId(member.getEmail());
+        prh.setPlaylistId(videoId);
+        prh.setRequestAt(new Date());
+        
+        playlistRequestHistoryRepository.save(prh);
+
+        return playlist; 
+    }
+
+    private String findCommonPrefix(List<String> titles,int depth) {
+        if(titles==null) return null;
+        System.out.println(titles.toString());
+        String shortest = titles.get(0).substring(depth,depth+1);
+        for (String title : titles) {
+            if(!title.substring(depth,depth+1).equals(shortest)){ 
+                return null;
+            }
+        }
+        String s = findCommonPrefix(titles, depth+1);
+        shortest = s==null ? shortest : shortest +s;
+
+        return shortest;
+    }
+    private static List<String> removeCommonPrefix(List<String> titles, String prefix) {
+        List<String> res = new ArrayList<>();
+        for(var e : titles){
+            res.add(e.replace(prefix, ""));
+        }
+        return res;
+    }
+    public List<String> addCommonSuffix(List<String> titles){
+        List<String> res = new ArrayList<>();
+        for(var e : titles){
+            res.add(e + " Auto-generated");
+        }
+        return res;
     }
 }

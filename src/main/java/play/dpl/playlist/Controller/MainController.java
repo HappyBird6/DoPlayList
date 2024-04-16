@@ -1,7 +1,11 @@
 package play.dpl.playlist.Controller;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,12 +19,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.gson.Gson;
 
 import jakarta.servlet.http.HttpServletResponse;
 import play.dpl.playlist.Entity.Member;
+import play.dpl.playlist.Entity.Music;
+import play.dpl.playlist.Entity.Playlist;
 import play.dpl.playlist.Service.MemberInfoDetails;
-import play.dpl.playlist.Service.PlayListService;
+import play.dpl.playlist.Service.MemberService;
+import play.dpl.playlist.Service.PlaylistService;
+import play.dpl.playlist.Service.SurveyService;
 import play.dpl.playlist.Service.YoutubeService;
 
 
@@ -28,9 +41,13 @@ import play.dpl.playlist.Service.YoutubeService;
 public class MainController {
     
     @Autowired
-    PlayListService playListService;
+    PlaylistService playlistService;
     @Autowired
     YoutubeService youtubeService;
+    @Autowired
+    SurveyService surveyService;
+    @Autowired
+    MemberService memberService;
 
     @RequestMapping("/")
     public ModelAndView main() {
@@ -38,6 +55,17 @@ public class MainController {
         if (!SecurityContextHolder.getContext().getAuthentication().getPrincipal().equals("anonymousUser")) {
             Member member = ((MemberInfoDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
             .getMember();
+            String playlistList = member.getPlaylistList();
+            Map<String,String> list = new HashMap<>();
+            String[] playlist = playlistList.split(",");
+            for(int i = 0;i<playlist.length;i++){
+                list.put(playlist[i].split("#")[0],playlist[i].split("#")[1]);
+            }
+            List<Object[]> history = memberService.getHistory(member.getEmail());
+
+            mav.addObject("playlistList",list);
+            mav.addObject("history",history);
+            mav.addObject("email",member.getEmail());
 
             System.out.println("ROLE : "+SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         }else{
@@ -45,64 +73,109 @@ public class MainController {
         }
         return mav;
     }
-
     @PostMapping("/getPlayList")
     @ResponseBody
-    public String getPlayList(@RequestBody String url, HttpServletResponse response){
-        System.out.println("받은 URL : "+url);
-        System.out.println("getPlayList 실행");
-        long s = new Date().getTime();
+    public String[] getPlayList(@RequestBody String url, HttpServletResponse response){
+
+        if (!SecurityContextHolder.getContext().getAuthentication().getPrincipal().equals("anonymousUser")) {
+            Member member = ((MemberInfoDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+            .getMember();
+        }else{
+            return new String[]{"-1"};
+        }   
+        Playlist playlist = playlistService.getPlaylist(url);       
         
-        List<String> titles = playListService.scrapPage(url);
-        String commonPrefix = findCommonPrefix(titles,0);
-        System.out.println("같은 prefix [: "+commonPrefix+"]");
-        if(commonPrefix!=null){
-            titles = removeCommonPrefix(titles, commonPrefix);
+        return new String[]{"1",playlist.getYtChannel(),playlist.getYtTitle(),playlist.getYtMusicTitlesJson()};
+    }
+
+    
+    @PostMapping("/getMusicData")
+    @ResponseBody
+    public String getMusic(@RequestBody String data, HttpServletResponse response){
+        
+        Music music = playlistService.getMusicData(data.split("#")[0],data.split("#")[1]);
+        // musicData : {music 유튜브 id, thumbnail 주소,link, 해당 유튜브 제목}
+        if(music==null){
+            return "-1";
         }
-        //titles = addCommonSuffix(titles);
+        return new Gson().toJson(music);
+    }
 
-        // for(var title : titles){
-        //     System.out.println(title);
-        //     try{
-        //         //youtubeService.findVideoId("ya29.a0AfB_byDrhZOx3HqiVI_jz5fh6MXeUZj8wxZPhnWhs-MO2oYbc45vlCOo2oy5685X1uvvfnfUfsez5IZGjYftNjYd2TpxPNSsaIpoU9ZC_s3bK3HSyskmDY7u2u_pMUBuy355BRmT8luyoVsoBOrxYg5JOlXlquh5t0ghaCgYKAd0SAQ4SFQHGX2Mi__CV42MJWqwh-SRvca-AeQ0171",title);
+    @PostMapping("/submitSelection")
+    @ResponseBody
+    public String submitSelection(@RequestBody String data, HttpServletResponse response) throws JsonMappingException, JsonProcessingException{
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(data);
+        String accessCode = "";
+        List<Integer> flagList = new ArrayList<>();
+        if (!SecurityContextHolder.getContext().getAuthentication().getPrincipal().equals("anonymousUser")) {
+            Member member = ((MemberInfoDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+            .getMember();
+            accessCode = member.getAccessCode();
+        }
 
-        //     }catch(Exception e){
-        //         e.printStackTrace();
-        //     }
-        //     System.out.println();
-        //     System.out.println();
-        // }
-        long e = new Date().getTime();
-        System.out.println("getPlayList 소요시간 : "+(e-s)/1000f + "초");
-        return new Gson().toJson(titles);
+        for (JsonNode node : jsonNode) {
+            String videoId = node.get("videoId").asText();
+            String ytChannel = node.get("ytChannel").asText();
+            String ytTitle = node.get("ytTitle").asText();
+            Music music = Music.builder().id(videoId).ytChannel(ytChannel).ytTitle(ytTitle).build();
+            String playlistId = node.get("playlistId").asText();
+
+            try{
+                youtubeService.addMusicToPlayList(accessCode, playlistId, music);
+            }catch(Exception e){
+                flagList.add(2);
+                continue;
+            }
+            flagList.add(1);
+        }
+        return new Gson().toJson(flagList);
+        // flag  0:변화x, 2:에러, 1:정상
+    }
+
+    @PostMapping("/vote")
+    @ResponseBody
+    public long vote(@RequestBody String data,HttpServletResponse response) throws JsonMappingException, JsonProcessingException{
+        
+        return surveyService.vote(Integer.parseInt(data));
+    }
+
+    @PostMapping("/voteDetail")
+    @ResponseBody
+    public int voteDetail(@RequestBody String data,HttpServletResponse response) throws JsonMappingException, JsonProcessingException{
+
+        return surveyService.vote(data);
+    }
+
+    @PostMapping("/refreshPlaylist")
+    @ResponseBody
+    public List<String[]> refreshPlaylist() throws GoogleJsonResponseException, GeneralSecurityException, IOException {
+        List<String[]> entity = new ArrayList<>();
+        if (!SecurityContextHolder.getContext().getAuthentication().getPrincipal().equals("anonymousUser")) {
+            Member member = ((MemberInfoDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+            .getMember();
+            List<String[]> list = youtubeService.getPlayList(member.getAccessCode(),null);
+            String playlistList =""; 
+            for(var e : list){
+                String temp = e[1]+"#"+e[0]+",";
+                playlistList += temp;        
+                entity.add(new String[]{e[1],e[0]});       
+            }
+            if(!playlistList.equals("")) playlistList.substring(0,playlistList.length()-1);
+            member.setPlaylistList(playlistList);
+            return entity;
+        }
+        return null;
     }
     
-    private String findCommonPrefix(List<String> titles,int depth) {
-        if(titles==null) return null;
 
-        String shortest = titles.get(0).substring(depth,depth+1);
-        for (String title : titles) {
-            if(!title.substring(depth,depth+1).equals(shortest)){ 
-                return null;
-            }
-        }
-        String s = findCommonPrefix(titles, depth+1);
-        shortest = s==null ? shortest : shortest +s;
-
-        return shortest;
+    @GetMapping("/PrivacyAgreement")
+    public String displayPrivacyAgreement() {
+        return "PrivacyAgreement";
     }
-    private static List<String> removeCommonPrefix(List<String> titles, String prefix) {
-        List<String> res = new ArrayList<>();
-        for(var e : titles){
-            res.add(e.replace(prefix, ""));
-        }
-        return res;
+    @GetMapping("/PrivacyPolicy")
+    public String displayPrivacyPolicy() {
+        return "PrivacyPolicy";
     }
-    public List<String> addCommonSuffix(List<String> titles){
-        List<String> res = new ArrayList<>();
-        for(var e : titles){
-            res.add(e + " Auto-generated");
-        }
-        return res;
-    }
+    
 }
