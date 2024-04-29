@@ -44,6 +44,7 @@ public class MemberService implements UserDetailsService {
         // 실패 : 2
         try{
             if(repository.findById(member.getEmail()).isPresent()){
+                member.setSignupDate(new Date());
                 repository.updateMember(member);
                 return 1;
             }else{
@@ -58,7 +59,9 @@ public class MemberService implements UserDetailsService {
     public boolean addUser(Member member) {
         try {
             member.setPassword(encoder.encode(member.getEmail()+new Date().getTime()));
-            
+            Date now = new Date();
+            member.setSigninDate(now);
+            member.setSignupDate(now);
             repository.save(member);
             return true;
         } catch (Exception e) {

@@ -1,4 +1,4 @@
-package play.dpl.playlist.Mananger;
+package play.dpl.playlist.Manager;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;

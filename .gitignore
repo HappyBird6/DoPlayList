@@ -1,4 +1,6 @@
 HELP.md
+plan.txt
+doplaylist-ppk.ppk
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

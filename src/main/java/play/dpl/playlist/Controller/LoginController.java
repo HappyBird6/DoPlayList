@@ -18,7 +18,7 @@ import org.springframework.web.servlet.ModelAndView;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import play.dpl.playlist.Entity.Member;
-import play.dpl.playlist.Mananger.CacheManager;
+import play.dpl.playlist.Manager.CacheManager;
 import play.dpl.playlist.Service.CookieService;
 import play.dpl.playlist.Service.LoginService;
 import play.dpl.playlist.Service.MemberService;

@@ -1,5 +1,7 @@
 package play.dpl.playlist.Entity;
 
+import java.util.Date;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -22,5 +24,7 @@ public class Member {
     private String accessCode;
     private String playlistList;
     private String password;
+    private Date signupDate;
+    private Date signinDate;
     // getters and setters
 }
