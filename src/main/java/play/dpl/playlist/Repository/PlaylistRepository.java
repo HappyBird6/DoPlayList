@@ -14,6 +14,6 @@ public interface PlaylistRepository extends JpaRepository<Playlist,String>{
     
     @Transactional
     @Modifying
-    @Query(value = "UPDATE TESTER1.Playlist SET REQUEST_COUNT = REQUEST_COUNT + 1 WHERE ID=':id'",nativeQuery = true)
+    @Query(value = "UPDATE Playlist SET REQUEST_COUNT = REQUEST_COUNT + 1 WHERE ID=':id'",nativeQuery = true)
     void updateRequestCount(@Param("id") String id);
 }

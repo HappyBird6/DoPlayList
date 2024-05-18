@@ -14,6 +14,6 @@ public interface MusicRespository extends JpaRepository<Music,String>{
     
     @Transactional
     @Modifying
-    @Query(value = "UPDATE TESTER1.Music SET REQUEST_COUNT = REQUEST_COUNT + 1 WHERE ID=':id'",nativeQuery = true)
+    @Query(value = "UPDATE Music SET REQUEST_COUNT = REQUEST_COUNT + 1 WHERE ID=':id'",nativeQuery = true)
     void updateRequestCount(@Param("id") String id);
 }

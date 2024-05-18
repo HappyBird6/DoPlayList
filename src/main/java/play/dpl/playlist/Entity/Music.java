@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(schema="tester1")
+// @Table(schema="tester1")
 public class Music {
     
     @Id
