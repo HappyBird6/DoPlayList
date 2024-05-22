@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
@@ -289,6 +290,7 @@ public class PlaylistService {
         return singer;
     }
     public Playlist scrapPage(String url) {
+        WebDriverManager.chromedriver().setup();
         ChromeDriver driver = new ChromeDriver();
         WebElement element;
         Playlist playlist;
