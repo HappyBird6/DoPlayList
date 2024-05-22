@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,7 +49,7 @@ public class MemberRepositoryImpl implements MemberRepository{
 	}
     @Override
     public Optional<Member> findById(String id) {
-		System.out.println("MemberRepositoryImpl : findById("+id+")");
+		// System.out.println("MemberRepositoryImpl : findById("+id+")");
         Member member = entityManager.find(Member.class, id);
         return Optional.ofNullable(member);
     }

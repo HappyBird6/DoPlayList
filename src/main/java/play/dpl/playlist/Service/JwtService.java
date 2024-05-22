@@ -25,14 +25,14 @@ public class JwtService {
     public static final int JWT_EXPIRY_TIME = 1000 * 60 * 60; // JWT 토큰 만료 시간 100분
     
     public String generateToken(String email, String userPassword) { 
-        System.out.println("generateToken");
+        // System.out.println("generateToken");
         Map<String, Object> claims = new HashMap<>(); 
         claims.put("password", userPassword);
         return createToken(claims, email); 
     } 
 
     private String createToken(Map<String, Object> claims, String email) { 
-        System.out.println("createToken");
+        // System.out.println("createToken");
         return Jwts.builder() 
                 .setClaims(claims) 
                 .setSubject(email) 

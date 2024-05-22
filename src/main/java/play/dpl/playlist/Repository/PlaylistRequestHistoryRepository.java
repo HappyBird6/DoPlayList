@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import jakarta.transaction.Transactional;
-import play.dpl.playlist.Entity.Playlist;
 import play.dpl.playlist.Entity.PlaylistRequestHistory;
 
 @Repository
@@ -19,6 +18,6 @@ public interface PlaylistRequestHistoryRepository extends JpaRepository<Playlist
     Optional<Long> findMaxId();
 
     @Transactional
-    @Query("SELECT DISTINCT prh.playlistId, p.ytTitle FROM PlaylistRequestHistory prh INNER JOIN Playlist p ON prh.playlistId = p.id WHERE prh.memberId = :memberId")
+    @Query(value="SELECT DISTINCT prh.playlistId, p.ytTitle FROM PlaylistRequestHistory prh INNER JOIN Playlist p ON prh.playlistId = p.id WHERE prh.memberId = :memberId")
     List<Object[]> findDistinctPlaylistIdAndYtTitleByMemberId(String memberId);
 }

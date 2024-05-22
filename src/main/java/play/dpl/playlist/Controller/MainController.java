@@ -2,7 +2,6 @@ package play.dpl.playlist.Controller;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,11 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -26,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.gson.Gson;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import play.dpl.playlist.Entity.Member;
 import play.dpl.playlist.Entity.Music;
@@ -50,11 +48,14 @@ public class MainController {
     MemberService memberService;
 
     @RequestMapping("/")
-    public ModelAndView main() {
+    public ModelAndView main(HttpServletRequest request) {
+        String clientIp = getClientIp(request);
+        System.out.println("접속 IP : "+clientIp);
         ModelAndView mav = new ModelAndView("index");
         if (!SecurityContextHolder.getContext().getAuthentication().getPrincipal().equals("anonymousUser")) {
             Member member = ((MemberInfoDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
             .getMember();
+
             String playlistList = member.getPlaylistList();
             Map<String,String> list = new HashMap<>();
             String[] playlist = playlistList.split(",");
@@ -66,10 +67,8 @@ public class MainController {
             mav.addObject("playlistList",list);
             mav.addObject("history",history);
             mav.addObject("email",member.getEmail());
-
-            System.out.println("ROLE : "+SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         }else{
-            System.out.println("로그인X");
+            // System.out.println("로그인X");
         }
         return mav;
     }
@@ -81,7 +80,7 @@ public class MainController {
             Member member = ((MemberInfoDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
             .getMember();
         }else{
-            return new String[]{"-1"};
+            // return new String[]{"-1"};
         }   
         Playlist playlist = playlistService.getPlaylist(url);       
         
@@ -177,5 +176,23 @@ public class MainController {
     public String displayPrivacyPolicy() {
         return "PrivacyPolicy";
     }
-    
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_CLIENT_IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        return ip;
+    }
 }

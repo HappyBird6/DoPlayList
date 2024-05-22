@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -14,7 +12,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import jakarta.transaction.Transactional;
 import play.dpl.playlist.Entity.Member;
 import play.dpl.playlist.Repository.MemberRepositoryImpl;
 import play.dpl.playlist.Repository.PlaylistRequestHistoryRepository;
@@ -51,7 +48,7 @@ public class MemberService implements UserDetailsService {
                 return 0;
             }
         }catch(Exception e){
-            System.out.println("MemberService.saveMember ERROR : "+e.getMessage());
+            // System.out.println("MemberService.saveMember ERROR : "+e.getMessage());
             e.printStackTrace();
             return 2;
         }

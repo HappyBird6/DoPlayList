@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -83,7 +81,7 @@ public class LoginController {
     @ResponseBody
     public int signupOk(@RequestBody String email, HttpServletResponse response) throws IOException {
 
-        System.out.println("이메일 : "+email);
+        // System.out.println("이메일 : "+email);
         Member member = CacheManager.getInstance().getCacheMember().getIfPresent(email);
         if(member==null) {
             return 1;

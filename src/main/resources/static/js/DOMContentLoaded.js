@@ -135,32 +135,33 @@ document.addEventListener("DOMContentLoaded",function(){
     // 링크 히스토리
     const inputField = document.getElementById('link');
     const historyContainer = document.getElementById('linkHistoryContainer');
-
-    // input 요소를 클릭할 때마다 히스토리를 표시하도록 설정
-    inputField.addEventListener('click', (event) => {
-        var historyItems = /*[[${history}]]*/'';
-        console.log(historyItems)
-        event.preventDefault();
-        for(let i =0;i<historyItems.length;i++){
-            let historyItem = historyItems[i];
-            historyContainer.innerHTML = `
-            <div class="playlist">
-                <a th:href="'https://www.youtube.com/watch?v=' + ${historyItem[0]}" target="_blank">
-                    <div style="height:16px; margin-right:5px"><span><i
-                                class="fa-solid fa-music"></i></span></div>
-                    <div th:text="${historyItem[1]}"></div>
-                </a>
-            </div>
-        `;
-        }
-        
-        historyContainer.style.display = 'block'; // 히스토리를 표시합니다.
-    });
-    document.addEventListener('click', (event) => {
-        if (event.target !== inputField && event.target !== historyContainer) {
-            historyContainer.style.display = 'none'; // historyContainer를 숨깁니다.
-        }
-      });
+    if(historyContainer){
+        // input 요소를 클릭할 때마다 히스토리를 표시하도록 설정
+        inputField.addEventListener('click', (event) => {
+            var historyItems = /*[[${history}]]*/'';
+            // console.log(historyItems)
+            event.preventDefault();
+            for(let i =0;i<historyItems.length;i++){
+                let historyItem = historyItems[i];
+                historyContainer.innerHTML = `
+                <div class="playlist">
+                    <a th:href="'https://www.youtube.com/watch?v=' + ${historyItem[0]}" target="_blank">
+                        <div style="height:16px; margin-right:5px"><span><i
+                                    class="fa-solid fa-music"></i></span></div>
+                        <div th:text="${historyItem[1]}"></div>
+                    </a>
+                </div>
+            `;
+            }
+            
+            historyContainer.style.display = 'block'; // 히스토리를 표시합니다.
+        });
+        document.addEventListener('click', (event) => {
+            if (event.target !== inputField && event.target !== historyContainer) {
+                historyContainer.style.display = 'none'; // historyContainer를 숨깁니다.
+            }
+        });
+    }
 });
 
 

@@ -8,18 +8,16 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.Gson;
 
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebElement;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import play.dpl.playlist.Entity.Member;
 import play.dpl.playlist.Entity.Music;
 import play.dpl.playlist.Entity.Playlist;
@@ -37,7 +35,7 @@ public class PlaylistService {
 
 
     private List<String> scrapChapter(ChromeDriver driver) {
-        System.out.println("챕터 스크랩 시작");
+        // system.out.println("챕터 스크랩 시작");
         List<String> titles = new ArrayList<>();
         List<WebElement> chapters = driver.findElements(
                 By.cssSelector("#details > h4.macro-markers.style-scope.ytd-macro-markers-list-item-renderer"));
@@ -51,14 +49,14 @@ public class PlaylistService {
                 }
             }
         } else {
-            System.out.println("챕터 없음");
+            // system.out.println("챕터 없음");
             return null;
         }
         return titles;
     }
 
     private List<String> scrapExpand(ChromeDriver driver) {
-        System.out.println("더보기란 타임스탬프 스크랩 시작");
+        // system.out.println("더보기란 타임스탬프 스크랩 시작");
         List<String> titles = new ArrayList<>();
         List<WebElement> videoDetails = driver
                 .findElements(By.cssSelector("#description-inline-expander > yt-attributed-string > span > span"));
@@ -68,7 +66,7 @@ public class PlaylistService {
                 try {
                     WebElement detailLink = detail.findElement(By.tagName("a"));
                     // 링크가 있다
-                    if (isTimeStamp(detailLink.getText())) {
+                    if (containsTimeStamp(detailLink.getText())) {
                         // 타임스탬프
                         isTitle = true;
                     }
@@ -87,18 +85,19 @@ public class PlaylistService {
                 }
             }
         } else {
-            System.out.println("더보기란 없음");
+            // system.out.println("더보기란 없음");
             return null;
         }
         if(titles.isEmpty()) {
-            System.out.println("더보기란 타임스탭프 없음");
+            // system.out.println("더보기란 타임스탭프 없음");
             return null;
         }
+        // System.out.println(titles.toString());
         return titles;
     }
 
     private List<String> scrapFirstComment(ChromeDriver driver) {
-        System.out.println("첫 댓글 타임스탬프 스크랩 시작");
+        // system.out.println("첫 댓글 타임스탬프 스크랩 시작");
         WebElement element;
         JavascriptExecutor js = (JavascriptExecutor) driver;
         List<String> titles = new ArrayList<>();
@@ -106,53 +105,98 @@ public class PlaylistService {
                 .findElements(By.cssSelector("#content-text > yt-formatted-string"));
         int count = 0;
         while (count < 10) {
+            System.out.println("COUNT : "+count);
             try {
                 js.executeScript("window.scrollBy(0,300)");
                 Thread.sleep(1000);
-                element = driver
-                        .findElement(By.cssSelector("#contents > ytd-comment-thread-renderer:nth-child(1)"));
-                element.findElement(By.cssSelector("#more > span")).click();
-                Thread.sleep(100);
-                firstCommentContent = element.findElements(By.className("yt-formatted-string"));
-                if (!firstCommentContent.isEmpty())
+                // element = driver
+                //         .findElement(By.cssSelector("#contents > ytd-comment-thread-renderer:nth-child(1)"));
+                //         System.out.println("ELEMENT : "+element.getTagName());
+                //         System.out.println("ELEMENT : "+element.getLocation().toString());
+                //         // element.findElement(By.cssSelector("#more > span")).click();
+                // Thread.sleep(100);
+                // // firstCommentContent = element.findElements(By.className("yt-formatted-string"));
+                // firstCommentContent = element.findElements(By.cssSelector("#content-text > .span"));
+                // System.out.println("firstCommentContent : "+firstCommentContent.toString());
+                firstCommentContent = driver.findElements(By.xpath("/html/body/ytd-app/div[1]/ytd-page-manager/ytd-watch-flexy/div[5]/div[1]/div/div[2]/ytd-comments/ytd-item-section-renderer/div[3]/ytd-comment-thread-renderer[1]/ytd-comment-view-model/div[3]/div[2]/ytd-expander/div/yt-attributed-string/span"));
+                
+                if (!firstCommentContent.isEmpty()){
                     break;
+                }
             } catch (Exception e) {
             } finally {
                 count++;
             }
         }
         if (!firstCommentContent.isEmpty()) {
-            boolean isTitle = false;
-            for (var line : firstCommentContent) {
-                if (line.getTagName().equals("a")) {
-                    // 링크
-                    if (isTimeStamp(line.getText())) {
-                        isTitle = true;
-                    }
-                } else {
-                    if (isTitle) {
-                        String title = line.getText();
-                        if (title.contains("\n")) {
-                            title = title.substring(0, title.indexOf("\n"));
-                        }
-                        
-                        title = removeSpecialCharacters(title).trim();
-                        if (!titles.contains(title) && !title.isEmpty()) {
-                            titles.add(title);
-                        }
-                        isTitle = false;
-                    }
+            String text = firstCommentContent.get(0).getText();
+            // System.out.println(text);
+            int s_index = 0;
+            int e_index = 0;
+            int cnt = 0;
+            boolean isStop = false;
+            while(cnt<1000){
+                e_index = text.indexOf("\n",s_index);
+                if(e_index==-1) {
+                    isStop = true;
                 }
+                
+                try{
+                    String title = "";
+                    if(!isStop) {
+                        title = text.substring(s_index, e_index);
+                    }else{
+                        title = text.substring(s_index,text.length());
+                    } 
+                    // System.out.println("title : "+title);
+                    if(!title.isEmpty() && containsTimeStamp(title)){
+                        // System.out.println("타임스탬프 발견");
+                        title = removeTimeStamps(title).trim();
+                        // System.out.println("바뀐 title : "+title);
+                    }
+                    title = standardize(title);
+                    if (!titles.contains(title.trim()) && !title.isEmpty()) {
+                        if(isTitle(title.trim())) titles.add(title.trim());
+                    }
+                    // System.out.println(title);
+                    s_index = e_index+1;
+
+                }catch(Exception e){
+                    break;
+                }
+                cnt++;
+                if(isStop) break;
             }
+            // for (var line : firstCommentContent) {
+            //     if (line.getTagName().equals("a")) {
+            //         // 링크
+            //         if (isTimeStamp(line.getText())) {
+            //             isTitle = true;
+            //         }
+            //     } else {
+            //         if (isTitle) {
+            //             String title = line.getText();
+            //             if (title.contains("\n")) {
+            //                 title = title.substring(0, title.indexOf("\n"));
+            //             }
+                        
+            //             title = removeSpecialCharacters(title).trim();
+            //             if (!titles.contains(title) && !title.isEmpty()) {
+            //                 titles.add(title);
+            //             }
+            //             isTitle = false;
+            //         }
+            //     }
+            // }
         } else {
-            System.out.println("첫 댓글 타임스탬프 없음");
+            // system.out.println("첫 댓글 타임스탬프 없음");
             return null;
         }
         return titles;
     }
 
     private List<String> scrapMusic(ChromeDriver driver) {
-        System.out.println("음악 섹션 스크랩 시작");
+        // system.out.println("음악 섹션 스크랩 시작");
         WebElement element;
         List<String> titles = new ArrayList<>();
         try{
@@ -190,12 +234,12 @@ public class PlaylistService {
                 
             }
         }catch(Exception e){
-            System.out.println("음악 섹션 없음");
+            // system.out.println("음악 섹션 없음");
             return null;
         }
         
         if(titles.isEmpty()) {
-            System.out.println("음악 섹션 없음");
+            // system.out.println("음악 섹션 없음");
             return null;
         }
         return titles;
@@ -221,15 +265,15 @@ public class PlaylistService {
         String singer = null;
         for(int i =0;i<keywords.size();i++){
             String keyword = keywords.get(i);
-            System.out.println("키워드 : "+keyword+"에 대한 검사");
+            // system.out.println("키워드 : "+keyword+"에 대한 검사");
             if(title.contains(keyword)){
-                System.out.println("타이틀이 키워드 --"+keyword+"-- 를 포함");
+                // system.out.println("타이틀이 키워드 --"+keyword+"-- 를 포함");
                 int endIndex = title.indexOf(keyword);
                 int startIndex = 0;
                 boolean skip = true;
                 for(int j = endIndex-1;j>0;j--){
                     char c = title.charAt(j);
-                    System.out.println(j+"인덱스의 캐릭터 : "+c);
+                    // system.out.println(j+"인덱스의 캐릭터 : "+c);
                     if(!Character.isWhitespace(c) && Character.isLetterOrDigit(c)) skip = false;
 
                     if(Character.isWhitespace(c) || !Character.isLetterOrDigit(c)) {
@@ -322,6 +366,7 @@ public class PlaylistService {
                 // }
                 String titlesJson = new Gson().toJson(titles);
                 playlist.setYtMusicTitlesJson(titlesJson);
+                if(titles.isEmpty()) return null;
                 return playlist;
             }
             // 5. 더보기 안의 음악란에만 표시된 음악만 표기
@@ -350,23 +395,29 @@ public class PlaylistService {
         return null;
     }
 
-    private static boolean isTimeStamp(String input) {
-        String pattern = "([0-5]?[0-9]|6[0-9])?(:[0-5]?[0-9](:[0-5]?[0-9])?)?";
-        // Pattern 클래스를 사용하여 정규표현식을 컴파일
-        Pattern regexPattern = Pattern.compile(pattern);
+    // 타임스탬프 패턴
+    private static final String TIME_STAMP_PATTERN = "(?:[01]?\\d|2[0-3]):?[0-5]\\d(?:[0-5]\\d)?";
+    // 타임스탬프 ~ 타임스탬프 형식의 패턴
+    private static final String FULL_PATTERN = TIME_STAMP_PATTERN + "(?:~" + TIME_STAMP_PATTERN + ")?";
+    private static boolean containsTimeStamp(String input) {
+        // String pattern = "([0-5]?[0-9]|6[0-9])?(:[0-5]?[0-9](:[0-5]?[0-9])?)?";
+        // // Pattern 클래스를 사용하여 정규표현식을 컴파일
+        // Pattern regexPattern = Pattern.compile(pattern);
 
-        // Matcher 클래스를 사용하여 입력된 문자열과 패턴을 비교
+        // // Matcher 클래스를 사용하여 입력된 문자열과 패턴을 비교
+        // Matcher matcher = regexPattern.matcher(input);
+
+        // // 일치 여부 반환
+        // return matcher.matches();
+
+        Pattern regexPattern = Pattern.compile(FULL_PATTERN);
         Matcher matcher = regexPattern.matcher(input);
-
-        // 일치 여부 반환
-        return matcher.matches();
+        return matcher.find();
     }
-    private static String removeSpecialCharacters(String input){
-
-        String cleanedString = input.replaceAll("[^\\p{L}\\p{N} ,\\-_&$!*{}\\[\\]()]+", "");
-        cleanedString = cleanedString.trim();
-
-        return cleanedString;
+    public static String removeTimeStamps(String input) {
+        Pattern regexPattern = Pattern.compile(FULL_PATTERN);
+        Matcher matcher = regexPattern.matcher(input);
+        return matcher.replaceAll("");
     }
 
     public String extractVideoIdFromUrl(String url) {
@@ -470,26 +521,29 @@ public class PlaylistService {
             playlistRepository.save(playlist);
         }
         // 리퀘스트 저장
-        PlaylistRequestHistory prh = new PlaylistRequestHistory();
-        Member member = ((MemberInfoDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getMember();
-        Optional<Long> tempMaxId = playlistRequestHistoryRepository.findMaxId();
-        if(tempMaxId.isPresent()){
-            prh.setId(tempMaxId.get()+1);
-        }else{
-            prh.setId(1l);
-        }
-        prh.setMemberId(member.getEmail());
-        prh.setPlaylistId(videoId);
-        prh.setRequestAt(new Date());
+        if (!SecurityContextHolder.getContext().getAuthentication().getPrincipal().equals("anonymousUser")) {
+            Member member = ((MemberInfoDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
+            .getMember();
+            PlaylistRequestHistory prh = new PlaylistRequestHistory();
+            Optional<Long> tempMaxId = playlistRequestHistoryRepository.findMaxId();
+            if(tempMaxId.isPresent()){
+                prh.setId(tempMaxId.get()+1);
+            }else{
+                prh.setId(1l);
+            }
+            prh.setMemberId(member.getEmail());
+            prh.setPlaylistId(videoId);
+            prh.setRequestAt(new Date());
+            
+            playlistRequestHistoryRepository.save(prh);
+        }   
         
-        playlistRequestHistoryRepository.save(prh);
-
         return playlist; 
     }
 
     private String findCommonPrefix(List<String> titles,int depth) {
-        if(titles==null) return null;
-        System.out.println(titles.toString());
+        if(titles==null || titles.isEmpty()) return null;
+        // // system.out.println(titles.toString());
         String shortest = titles.get(0).substring(depth,depth+1);
         for (String title : titles) {
             if(!title.substring(depth,depth+1).equals(shortest)){ 
@@ -514,5 +568,32 @@ public class PlaylistService {
             res.add(e + " Auto-generated");
         }
         return res;
+    }
+    public boolean isTitle(String title){
+        boolean isTitle = true;
+        title = title.toLowerCase();
+        boolean A = title.contains("타임라인");
+        boolean B = title.contains("타 임 라 인");
+        boolean C = title.contains("타임 라인");
+        boolean D = title.contains("tracklist");
+        boolean E = title.contains("track list");
+        boolean F = title.contains("timeline");
+        boolean G = title.contains("time line");
+        if(A || B || C || D || E || F || G) isTitle = false;
+        return isTitle;
+    }
+    public String standardize(String title){
+        title = title.replace("~","");
+        title = title.replace(":","");
+        title = title.replace("[","");
+        title = title.replace("]","");
+        return title;
+    }
+    private static String removeSpecialCharacters(String input){
+
+        String cleanedString = input.replaceAll("[^\\p{L}\\p{N} ,\\-_&$!*{}\\[\\]()]+", "");
+        cleanedString = cleanedString.trim();
+
+        return cleanedString;
     }
 }

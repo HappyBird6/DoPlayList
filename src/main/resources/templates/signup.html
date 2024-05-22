@@ -84,7 +84,7 @@
             throw new Error('서버 응답이 실패했습니다.');
         }
         const flag = await response.json();
-        console.log(flag);
+        // console.log(flag);
         switch(flag){
             case "0":
                 alert("동의 하셨습니다.");

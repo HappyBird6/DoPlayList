@@ -40,7 +40,7 @@ public class SurveyService {
                 return 2;
             }
         }catch(Exception e){
-            System.out.println(e.getMessage());
+            // System.out.println(e.getMessage());
             return 2;
         }
 
@@ -72,7 +72,7 @@ public class SurveyService {
                 }
             }
         }catch(Exception e){
-            System.out.println(e.getMessage());
+            // System.out.println(e.getMessage());
             return 2;
         }
         return 2;

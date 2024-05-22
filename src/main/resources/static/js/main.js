@@ -17,10 +17,10 @@ const submitLink = async function () {
             throw new Error('서버 응답이 실패했습니다.');
         }
         const flag = await response.json();
-        if(flag[0]==="-1"){
-            alert("로그인 이후 이용 가능합니다.");
-            return;
-        }
+        // if(flag[0]==="-1"){
+        //     alert("로그인 이후 이용 가능합니다.");
+        //     return;
+        // }
         const items = document.querySelector(".section-playlist-show").querySelector(".items");
         let channel = flag[1];
         let title = flag[2];
@@ -59,23 +59,26 @@ const submitLink = async function () {
             playlistIndex += 1;
         }
         let history = document.querySelector("#history .content");
-        let h = history.querySelectorAll(".playlist a");
-        let check = true;
-        h.forEach(function(e){
-            if(value.includes(e.href)){
-                check = false;
-            }
-        })
-        if(check){
-            history.innerHTML +=`
-                <div class="playlist">
-                    <a href="${value}" target="_blank">
-                        <div style="height:16px; margin-right:5px"><span><i class="fa-solid fa-music"></i></span></div>
-                        <div>${title}</div>
-                    </a>
-                </div> 
-            `
+        if(history){
+            let h = history.querySelectorAll(".playlist a");
+            let check = true;
+            h.forEach(function(e){
+                if(value.includes(e.href)){
+                    check = false;
+                }
+            })
+            if(check){
+                history.innerHTML +=`
+                    <div class="playlist">
+                        <a href="${value}" target="_blank">
+                            <div style="height:16px; margin-right:5px"><span><i class="fa-solid fa-music"></i></span></div>
+                            <div>${title}</div>
+                        </a>
+                    </div> 
+                `
+            } 
         }
+        
     } catch (error) {
         console.error('DB 호출 중 오류가 발생했습니다.', error);
     } finally {

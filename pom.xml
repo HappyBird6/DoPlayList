@@ -12,7 +12,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0; http://maven.apache.org/x
 	<groupId>play.dpl</groupId>
 	<artifactId>playlist</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+	<!-- <packaging>war</packaging> -->
 	<name>playlist</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>

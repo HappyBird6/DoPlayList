@@ -1,38 +1,5 @@
 package play.dpl.playlist.Service;
 
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.client.util.store.FileDataStoreFactory;
-import com.google.api.services.youtube.YouTube;
-import com.google.api.services.youtube.model.Playlist;
-import com.google.api.services.youtube.model.PlaylistItem;
-import com.google.api.services.youtube.model.PlaylistItemSnippet;
-import com.google.api.services.youtube.model.PlaylistListResponse;
-import com.google.api.services.youtube.model.PlaylistSnippet;
-import com.google.api.services.youtube.model.ResourceId;
-import com.google.api.services.youtube.model.SearchListResponse;
-import com.google.gson.JsonObject;
-
-import play.dpl.playlist.Entity.Member;
-import play.dpl.playlist.Entity.Music;
-import play.dpl.playlist.Entity.MusicRequestHistory;
-import play.dpl.playlist.Entity.PlaylistRequestHistory;
-import play.dpl.playlist.Repository.MusicRequestHistoryRepository;
-import play.dpl.playlist.Repository.MusicRespository;
-import reactor.core.publisher.Mono;
-
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -45,9 +12,32 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.youtube.YouTube;
+import com.google.api.services.youtube.model.Playlist;
+import com.google.api.services.youtube.model.PlaylistItem;
+import com.google.api.services.youtube.model.PlaylistItemSnippet;
+import com.google.api.services.youtube.model.PlaylistListResponse;
+import com.google.api.services.youtube.model.PlaylistSnippet;
+import com.google.api.services.youtube.model.ResourceId;
+import com.google.api.services.youtube.model.SearchListResponse;
+
+import play.dpl.playlist.Entity.Member;
+import play.dpl.playlist.Entity.Music;
+import play.dpl.playlist.Entity.MusicRequestHistory;
+import play.dpl.playlist.Repository.MusicRequestHistoryRepository;
+import play.dpl.playlist.Repository.MusicRespository;
 
 @Service
 public class YoutubeService {
@@ -116,7 +106,7 @@ public class YoutubeService {
         YouTube.Playlists.Insert request = youtubeService.playlists()
             .insert("snippet", playlist);
         Playlist response = request.execute();
-        System.out.println("addPlayList : " + response);
+        // System.out.println("addPlayList : " + response);
     }
     public List<String[]> getPlayList(String accessToken, String nextPageToken) throws GeneralSecurityException, IOException, GoogleJsonResponseException{
         List<String[]> list = new ArrayList<>();
@@ -173,7 +163,7 @@ public class YoutubeService {
                 .insert("snippet", playlistItem);
             request.setFields("snippet(title)");
             PlaylistItem response = request.execute();
-            System.out.println(response.getSnippet().getTitle()+"이 재생목록에 추가되었습니다.");
+            // System.out.println(response.getSnippet().getTitle()+"이 재생목록에 추가되었습니다.");
             if(musicRespository.existsById(music.getId())){
                 musicRespository.updateRequestCount(music.getId());                
             }else{
@@ -198,7 +188,7 @@ public class YoutubeService {
 
             return true;    
         }catch(Exception e){
-            System.out.println("재생목록에 추가 실패");
+            // System.out.println("재생목록에 추가 실패");
             e.printStackTrace();
             return false;
         }
@@ -215,7 +205,7 @@ public class YoutubeService {
             .setVideoLicense("youtube")
             .setFields("items(id(videoId),snippet(thumbnails(default(url)),title))")
             .execute();
-        System.out.println(response);
+        // System.out.println(response);
     }
     
     
