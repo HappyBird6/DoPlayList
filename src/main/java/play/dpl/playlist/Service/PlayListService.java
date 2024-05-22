@@ -8,17 +8,18 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.Gson;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import play.dpl.playlist.Entity.Member;
 import play.dpl.playlist.Entity.Music;
 import play.dpl.playlist.Entity.Playlist;
@@ -290,8 +291,15 @@ public class PlaylistService {
         return singer;
     }
     public Playlist scrapPage(String url) {
+        // System.out.println("SCRAP PAGE : 드라이버 셋업 전");
         WebDriverManager.chromedriver().setup();
-        ChromeDriver driver = new ChromeDriver();
+        // System.out.println("SCRAP PAGE : 드라이버 셋업 후");
+        ChromeOptions chromeOptions = new ChromeOptions();
+        chromeOptions.addArguments("--headless");
+        chromeOptions.addArguments("--no-sandbox");
+        chromeOptions.addArguments("--single-process");
+        chromeOptions.addArguments("--disable-dev-shm-usage");
+        ChromeDriver driver = new ChromeDriver(chromeOptions);
         WebElement element;
         Playlist playlist;
         
@@ -462,7 +470,13 @@ public class PlaylistService {
             suffix = "\"Official\"";
         }
 
-        ChromeDriver driver = new ChromeDriver();
+        ChromeOptions chromeOptions = new ChromeOptions();
+        chromeOptions.addArguments("--headless");
+        chromeOptions.addArguments("--no-sandbox");
+        chromeOptions.addArguments("--single-process");
+        chromeOptions.addArguments("--disable-dev-shm-usage");
+        ChromeDriver driver = new ChromeDriver(chromeOptions);
+        
         WebElement element;
         Music music = null;
         try {
