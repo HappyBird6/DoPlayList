@@ -126,7 +126,7 @@ const addEventToRemoveBtn = function () {
     }
 }
 const login = async function () {
-    window.location.href = "https://accounts.google.com/o/oauth2/auth?access_type=offline&approval_prompt=force&client_id=48707345453-b5i5kn49fgqoievl0koq889r11rg3gom.apps.googleusercontent.com&redirect_uri=http://localhost:8080/login/oauth2/code/google&response_type=code&scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.force-ssl";
+    window.location.href = "https://accounts.google.com/o/oauth2/auth?access_type=offline&approval_prompt=force&client_id=48707345453-b5i5kn49fgqoievl0koq889r11rg3gom.apps.googleusercontent.com&redirect_uri=http://localhost:8080/login/oauth2/code/google&response_type=code&scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/youtube "; //https://www.googleapis.com/auth/youtube.force-ssl
 }
 
 const openUserMenu = function (element) {

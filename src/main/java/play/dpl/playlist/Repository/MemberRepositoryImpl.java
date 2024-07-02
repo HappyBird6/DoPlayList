@@ -34,10 +34,10 @@ public class MemberRepositoryImpl implements MemberRepository{
 	@Transactional
 	public Member updateMember(Member member){
 		Query query = entityManager.createNativeQuery(
-                "UPDATE MEMBER " +
-                        "SET ACCESS_CODE = :accessCode, PLAYLIST_LIST = :playlistList "
+                "UPDATE member " +
+                        "SET access_code = :accessCode, playlist_list = :playlistList "
                         +
-                        "WHERE EMAIL = :email");
+                        "WHERE email = :email");
         query.setParameter("accessCode", member.getAccessCode());
         query.setParameter("playlistList", member.getPlaylistList());
         query.setParameter("email", member.getEmail());

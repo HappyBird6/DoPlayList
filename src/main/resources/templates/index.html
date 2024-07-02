@@ -129,7 +129,7 @@
                 <div class="section-input-main flex-center">
                     <div class="blank"></div>
                     <div style="width: 100%;">
-                        <input class="input-link" id="link" placeholder="https://www.youtube.com/watch?v=ImqDaISiOac">
+                        <input class="input-link" id="link" placeholder="https://www.youtube.com/watch?v=ImqDaISiOac" autocomplete="off">
                         <div th:if="${history}" id="linkHistoryContainer">
                             <div class="playlist" th:if="${history}" th:each="playlist,iter : ${history}">
                                 <div th:text="${playlist[1]}" th:onclick="fillLink('https://www.youtube.com/watch?v=' + [[${playlist[0]}]])"></div>

@@ -2,6 +2,7 @@ package play.dpl.playlist.Controller;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class MainController {
     @RequestMapping("/")
     public ModelAndView main(HttpServletRequest request) {
         String clientIp = getClientIp(request);
-        System.out.println("접속 IP : "+clientIp);
+        System.out.println("접속 IP : "+clientIp+" / "+new Date());
         ModelAndView mav = new ModelAndView("index");
         if (!SecurityContextHolder.getContext().getAuthentication().getPrincipal().equals("anonymousUser")) {
             Member member = ((MemberInfoDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
@@ -162,6 +163,7 @@ public class MainController {
             }
             if(!playlistList.equals("")) playlistList.substring(0,playlistList.length()-1);
             member.setPlaylistList(playlistList);
+            memberService.saveMember(member);
             return entity;
         }
         return null;
