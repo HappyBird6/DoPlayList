@@ -9,6 +9,7 @@ doplaylist-ppk.ppk
 /src/main/resources/client-secrets/client-secrets.json
 /src/main/resources/properties/env.properties
 env.properties
+plan.txt
 ### STS ###
 .apt_generated
 .classpath
