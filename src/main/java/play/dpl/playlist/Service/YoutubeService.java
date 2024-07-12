@@ -206,49 +206,5 @@ public class YoutubeService {
             .setFields("items(id(videoId),snippet(thumbnails(default(url)),title))")
             .execute();
         // System.out.println(response);
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    /*
-    public void deletePlayList(String accessToken,String playListId)
-        throws GeneralSecurityException, IOException, GoogleJsonResponseException {
-        YouTube youtubeService = getService(accessToken);
-        // Define and execute the API request
-        YouTube.Playlists.Delete request = youtubeService.playlists()
-            .delete(playListId);
-        request.execute();
-    }
-    public void updatePlayList(String accessToken,String playListId,String title)
-        throws GeneralSecurityException, IOException, GoogleJsonResponseException {
-        YouTube youtubeService = getService(accessToken);
-        
-        // Define the Playlist object, which will be uploaded as the request body.
-        Playlist playlist = new Playlist();
-        
-        // Add the id string property to the Playlist object.
-        playlist.setId(playListId);
-        
-        // Add the snippet object property to the Playlist object.
-        PlaylistSnippet snippet = new PlaylistSnippet();
-        snippet.setTitle(title);
-        playlist.setSnippet(snippet);
-
-        // Define and execute the API request
-        YouTube.Playlists.Update request = youtubeService.playlists()
-            .update("snippet", playlist);
-        Playlist response = request.execute();
-        System.out.println(response);
-    }
-    */
+    }    
 }

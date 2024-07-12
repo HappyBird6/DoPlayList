@@ -2,7 +2,6 @@ package play.dpl.playlist.Controller;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,19 +49,20 @@ public class MainController {
 
     @RequestMapping("/")
     public ModelAndView main(HttpServletRequest request) {
-        String clientIp = getClientIp(request);
-        System.out.println("접속 IP : "+clientIp+" / "+new Date());
         ModelAndView mav = new ModelAndView("index");
         if (!SecurityContextHolder.getContext().getAuthentication().getPrincipal().equals("anonymousUser")) {
             Member member = ((MemberInfoDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
             .getMember();
 
             String playlistList = member.getPlaylistList();
+
+            // 유튜브 재생목록 재생목록이름#ID
             Map<String,String> list = new HashMap<>();
             String[] playlist = playlistList.split(",");
             for(int i = 0;i<playlist.length;i++){
                 list.put(playlist[i].split("#")[0],playlist[i].split("#")[1]);
             }
+            // 검색 기록
             List<Object[]> history = memberService.getHistory(member.getEmail());
 
             mav.addObject("playlistList",list);
@@ -170,31 +170,16 @@ public class MainController {
     }
     
 
-    @GetMapping("/PrivacyAgreement")
-    public String displayPrivacyAgreement() {
-        return "PrivacyAgreement";
+    @GetMapping("/document")
+    public String displayDocument() {
+        return "document";
     }
-    @GetMapping("/PrivacyPolicy")
-    public String displayPrivacyPolicy() {
-        return "PrivacyPolicy";
-    }
-    private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("WL-Proxy-Client-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_CLIENT_IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        return ip;
-    }
+    // @GetMapping("/PrivacyAgreement")
+    // public String displayPrivacyAgreement() {
+    //     return "PrivacyAgreement";
+    // }
+    // @GetMapping("/PrivacyPolicy")
+    // public String displayPrivacyPolicy() {
+    //     return "PrivacyPolicy";
+    // }
 }

@@ -1,11 +1,13 @@
 HELP.md
 plan.txt
-doplaylist-ppk.ppk
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+client-secrets.json
+doplaylist-ppk.ppk
+env.properties
 ### STS ###
 .apt_generated
 .classpath

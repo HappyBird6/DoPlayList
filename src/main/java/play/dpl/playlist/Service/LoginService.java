@@ -8,6 +8,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
 import play.dpl.playlist.Entity.Member;
 @Service
 public class LoginService {
@@ -60,17 +61,6 @@ public class LoginService {
                 .map(jsonNode -> jsonNode.get("access_token").asText())
                 .block();
     }
-    // public Mono<String> getRefreshToken(String refreshToken) {
-    //     return webClient.post()
-    //             .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-    //             .body(BodyInserters.fromFormData("refresh_token", refreshToken)
-    //                     .with("client_id", clientId)
-    //                     .with("client_secret", clientSecret)
-    //                     .with("grant_type", "refresh_token"))
-    //             .retrieve()
-    //             .bodyToMono(JsonNode.class)
-    //             .map(jsonNode -> jsonNode.get("access_token").asText());
-    // }
     public JsonNode getUserInfo(String accessToken) {
         String userInfoUrl = "https://www.googleapis.com/oauth2/v1/userinfo";
         

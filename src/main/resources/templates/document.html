@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/main.css">
+    <link rel="canonical" href="https://doplaylist.com/" />
+    <title>Document</title>
+</head>
+<body>
+    <div class="gohome"><span><a href="/">메인 돌아가기</a></span></div>
+
+    <div style="border:1px solid black">
+        <div th:replace="~{PrivacyPolicy :: PrivacyPolicy}"></div>
+    </div>
+
+    <div class="blank"></div>
+
+    <div style="border:1px solid black">
+        <div th:replace="~{PrivacyAgreement :: PrivacyAgreement}"></div>
+    </div>
+
+    <div class="blank"></div>
+
+    <div style="border:1px solid black">
+        <div th:replace="~{LimitedUsePolicy :: LimitedUsePolicy}"></div>
+    </div>
+    <div>
+</body>
+</html>
