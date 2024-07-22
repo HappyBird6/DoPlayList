@@ -22,6 +22,14 @@ const submitLink = async function () {
         //     return;
         // }
         const items = document.querySelector(".section-playlist-show").querySelector(".items");
+        console.log(flag[0]);
+        if(flag[0]===0){{
+            items.innerHTML +=`
+            <div class='channel-info'>
+                플리 추출 실패
+            </div>
+        `
+        }}
         let channel = flag[1];
         let title = flag[2];
         items.innerHTML +=`

@@ -84,7 +84,7 @@ public class MainController {
             // return new String[]{"-1"};
         }   
         Playlist playlist = playlistService.getPlaylist(url);       
-        
+        if(playlist==null) return new String[]{"0"};          
         return new String[]{"1",playlist.getYtChannel(),playlist.getYtTitle(),playlist.getYtMusicTitlesJson()};
     }
 

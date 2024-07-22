@@ -1,7 +1,6 @@
 package play.dpl.playlist.Service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +13,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +26,11 @@ import play.dpl.playlist.Entity.Playlist;
 import play.dpl.playlist.Entity.PlaylistRequestHistory;
 import play.dpl.playlist.Repository.PlaylistRepository;
 import play.dpl.playlist.Repository.PlaylistRequestHistoryRepository;
-
+/*
+ * 
+ * 셀레니움 동작
+ * 
+ */
 @Service
 public class PlaylistService {
     
@@ -34,8 +38,96 @@ public class PlaylistService {
     private PlaylistRepository playlistRepository;
     @Autowired
     private PlaylistRequestHistoryRepository playlistRequestHistoryRepository;
+    
+    @Async("taskExecutor")
+    public Playlist scrapPage(String url) {
+        // System.out.println("SCRAP PAGE : 드라이버 셋업 전");
+        WebDriverManager.chromedriver().setup();
+        // System.out.println("SCRAP PAGE : 드라이버 셋업 후");
+        ChromeOptions chromeOptions = new ChromeOptions();
+        chromeOptions.addArguments("--headless");
+        chromeOptions.addArguments("--no-sandbox");
+        chromeOptions.addArguments("--single-process");
+        chromeOptions.addArguments("--disable-dev-shm-usage");
+        ChromeDriver driver = new ChromeDriver(chromeOptions);
+        WebElement element;
+        Playlist playlist;
+        
+        List<String> titles;
+        try {
+            // WebDriverManager.chromedriver().create();
+            driver.get(url);
 
+            Thread.sleep(1000); // 페이지 로딩 대기시간
+            // 1. 더 보기 클릭
+            while (true) {
+                try {
+                    element = driver.findElement(By.id("expand"));
+                    element.click();
+                    break;
+                } catch (Exception e) {
+                    Thread.sleep(100);
+                }
+            }
+            Thread.sleep(100);
 
+            // 0. 기본 정보 체크
+            playlist = getData(driver);
+            playlist.setId(extractVideoIdFromUrl(url));
+            // 4. 첫번째 댓글 타임라인 분석
+            titles = scrapFirstComment(driver);
+            if (titles != null && !titles.isEmpty()) {
+                driver.quit();
+                System.out.println("xx3");
+                if(titles.isEmpty()) return null;
+                System.out.println("1: "+titles);
+                return standizeTitles(playlist,titles);
+            }
+            // 2. 챕터가 있으면 스크래핑
+            titles = scrapChapter(driver);
+            if (titles != null && !titles.isEmpty()) {
+                driver.quit();
+                System.out.println("xx1");
+                if(titles.isEmpty()) return null;
+                return standizeTitles(playlist,titles);
+            }
+
+            // 3. 더보기란에 주인장이 올린 타임라인 분석
+            titles = scrapExpand(driver);
+            System.out.println(titles);
+            if (titles != null && !titles.isEmpty()) {
+                driver.quit();
+                System.out.println("xx2");
+                if(titles.isEmpty()) return null;
+                return standizeTitles(playlist,titles);
+            }
+
+            
+            // 5. 더보기 안의 음악란에만 표시된 음악만 표기
+            titles = scrapMusic(driver);
+            if (titles != null && !titles.isEmpty()) {
+                driver.quit();
+                if(titles.isEmpty()) return null;
+                System.out.println("2: "+titles);
+                return standizeTitles(playlist,titles);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            // 브라우저 종료
+            driver.quit();
+        }
+        return null;
+    }
+    private Playlist standizeTitles(Playlist playlist, List<String> titles){
+        String commonPrefix = findCommonPrefix(titles,0);
+        if(commonPrefix!=null){
+            titles = removeCommonPrefix(titles, commonPrefix);
+        }
+        String titlesJson = new Gson().toJson(titles);
+        playlist.setYtMusicTitlesJson(titlesJson);
+        return playlist;
+    }
     private List<String> scrapChapter(ChromeDriver driver) {
         // system.out.println("챕터 스크랩 시작");
         List<String> titles = new ArrayList<>();
@@ -68,8 +160,10 @@ public class PlaylistService {
                 try {
                     WebElement detailLink = detail.findElement(By.tagName("a"));
                     // 링크가 있다
+                    System.out.println("링크있음");
                     if (containsTimeStamp(detailLink.getText())) {
                         // 타임스탬프
+                        System.out.println("타임스탬프");
                         isTitle = true;
                     }
                 } catch (Exception e) {
@@ -261,149 +355,6 @@ public class PlaylistService {
         }
         return playlist;          
     }
-    private String isOneSinger(String title){
-        List<String> keywords = Arrays.asList("노래 모음","노래모음");
-
-        String singer = null;
-        for(int i =0;i<keywords.size();i++){
-            String keyword = keywords.get(i);
-            // system.out.println("키워드 : "+keyword+"에 대한 검사");
-            if(title.contains(keyword)){
-                // system.out.println("타이틀이 키워드 --"+keyword+"-- 를 포함");
-                int endIndex = title.indexOf(keyword);
-                int startIndex = 0;
-                boolean skip = true;
-                for(int j = endIndex-1;j>0;j--){
-                    char c = title.charAt(j);
-                    // system.out.println(j+"인덱스의 캐릭터 : "+c);
-                    if(!Character.isWhitespace(c) && Character.isLetterOrDigit(c)) skip = false;
-
-                    if(Character.isWhitespace(c) || !Character.isLetterOrDigit(c)) {
-                        if(skip) continue;
-                        startIndex = j;
-                        break;
-                    }
-                }
-                singer = title.substring(startIndex, endIndex).trim();
-                break;
-            }
-        }
-        return singer;
-    }
-    public Playlist scrapPage(String url) {
-        // System.out.println("SCRAP PAGE : 드라이버 셋업 전");
-        WebDriverManager.chromedriver().setup();
-        // System.out.println("SCRAP PAGE : 드라이버 셋업 후");
-        ChromeOptions chromeOptions = new ChromeOptions();
-        chromeOptions.addArguments("--headless");
-        chromeOptions.addArguments("--no-sandbox");
-        chromeOptions.addArguments("--single-process");
-        chromeOptions.addArguments("--disable-dev-shm-usage");
-        ChromeDriver driver = new ChromeDriver(chromeOptions);
-        WebElement element;
-        Playlist playlist;
-        
-        List<String> titles;
-        try {
-            // WebDriverManager.chromedriver().create();
-            driver.get(url);
-
-            Thread.sleep(1000); // 페이지 로딩 대기시간
-            // 1. 더 보기 클릭
-            while (true) {
-                try {
-                    element = driver.findElement(By.id("expand"));
-                    element.click();
-                    break;
-                } catch (Exception e) {
-                    Thread.sleep(100);
-                }
-            }
-            Thread.sleep(100);
-            // 0. 기본 정보 체크
-            playlist = getData(driver);
-            // String singer = isOneSinger(playlist.getYtTitle());
-            String singer = null;
-
-            playlist.setId(extractVideoIdFromUrl(url));
-            
-            // 2. 챕터가 있으면 스크래핑
-            titles = scrapChapter(driver);
-            if (titles != null) {
-                driver.quit();
-                String commonPrefix = findCommonPrefix(titles,0);
-                if(commonPrefix!=null){
-                    titles = removeCommonPrefix(titles, commonPrefix);
-                }
-                // if(singer!=null){
-                //     for(int i =0;i<titles.size();i++){
-                //         titles.set(i,singer+" - "+titles.get(i));
-                //     }
-                // }
-                String titlesJson = new Gson().toJson(titles);
-                playlist.setYtMusicTitlesJson(titlesJson);
-                return playlist;
-            }
-            // 3. 더보기란에 주인장이 올린 타임라인 분석
-            titles = scrapExpand(driver);
-            if (titles != null) {
-                driver.quit();
-                String commonPrefix = findCommonPrefix(titles,0);
-                if(commonPrefix!=null){
-                    titles = removeCommonPrefix(titles, commonPrefix);
-                }
-                // if(singer!=null){
-                //     for(int i =0;i<titles.size();i++){
-                //         titles.set(i,singer+" - "+titles.get(i));
-                //     }
-                // }
-                String titlesJson = new Gson().toJson(titles);
-                playlist.setYtMusicTitlesJson(titlesJson);
-                return playlist;
-            }
-            // 4. 첫번째 댓글 타임라인 분석
-            titles = scrapFirstComment(driver);
-            if (titles != null) {
-                driver.quit();
-                String commonPrefix = findCommonPrefix(titles,0);
-                if(commonPrefix!=null){
-                    titles = removeCommonPrefix(titles, commonPrefix);
-                }
-                // if(singer!=null){
-                //     for(int i =0;i<titles.size();i++){
-                //         titles.set(i,singer+" - "+titles.get(i));
-                //     }
-                // }
-                String titlesJson = new Gson().toJson(titles);
-                playlist.setYtMusicTitlesJson(titlesJson);
-                if(titles.isEmpty()) return null;
-                return playlist;
-            }
-            // 5. 더보기 안의 음악란에만 표시된 음악만 표기
-            titles = scrapMusic(driver);
-            if (titles != null) {
-                driver.quit();
-                String commonPrefix = findCommonPrefix(titles,0);
-                if(commonPrefix!=null){
-                    titles = removeCommonPrefix(titles, commonPrefix);
-                }
-                // if(singer!=null){
-                //     for(int i =0;i<titles.size();i++){
-                //         titles.set(i,singer+" - "+titles.get(i));
-                //     }
-                // }
-                String titlesJson = new Gson().toJson(titles);
-                playlist.setYtMusicTitlesJson(titlesJson);
-                return playlist;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            // 브라우저 종료
-            driver.quit();
-        }
-        return null;
-    }
 
     // 타임스탬프 패턴
     private static final String TIME_STAMP_PATTERN = "(?:[01]?\\d|2[0-3]):?[0-5]\\d(?:[0-5]\\d)?";
@@ -533,6 +484,9 @@ public class PlaylistService {
             playlistRepository.updateRequestCount(playlist.getId());
         }else{
             playlist = scrapPage(url);
+            if(playlist==null){
+                return null;
+            }
             playlist.setRequestCount(1l);
             playlistRepository.save(playlist);
         }
@@ -558,18 +512,21 @@ public class PlaylistService {
     }
 
     private String findCommonPrefix(List<String> titles,int depth) {
-        if(titles==null || titles.isEmpty()) return null;
-        // // system.out.println(titles.toString());
-        String shortest = titles.get(0).substring(depth,depth+1);
-        for (String title : titles) {
-            if(!title.substring(depth,depth+1).equals(shortest)){ 
-                return null;
+        try{
+            if(titles==null || titles.isEmpty()) return null;
+            // // system.out.println(titles.toString());
+            String shortest = titles.get(0).substring(depth,depth+1);
+            for (String title : titles) {
+                if(!title.substring(depth,depth+1).equals(shortest)){ 
+                    return null;
+                }
             }
+            String s = findCommonPrefix(titles, depth+1);
+            shortest = s==null ? shortest : shortest +s;
+            return shortest;
+        }catch(StringIndexOutOfBoundsException e){
+            return null;
         }
-        String s = findCommonPrefix(titles, depth+1);
-        shortest = s==null ? shortest : shortest +s;
-
-        return shortest;
     }
     private static List<String> removeCommonPrefix(List<String> titles, String prefix) {
         List<String> res = new ArrayList<>();
