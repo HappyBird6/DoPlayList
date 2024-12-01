@@ -20,7 +20,7 @@
 
 1. Google OAuth2 로그인으로 해당 아이디 유튜브 재생목록에 접근
 2. 플레이리스트 링크를 입력받으면 Selenium으로 해당 페이지 스크래핑
-3. 스크래핑한 데이터에서 곡을 특정할 수 있는 데이터(타임스탬프, youtube music정보란)에서 가수와 곡 제목 추출(playlist service니까 해당 클래스의 코드에 링크?)
+3. 스크래핑한 데이터에서 곡을 특정할 수 있는 데이터(타임스탬프, youtube music 정보란)에서 가수와 곡 제목 추출
 4. 추출한 각 곡에 대해 사용자의 재생목록에 추가하거나 유튜브 검색 링크로 link
 5. 한번 검색된 플레이리스트 정보는 DB에 저장되고 이후 빠른 반환이 가능함
 ![DoPlayList sequence diagram](https://github.com/user-attachments/assets/ca752a98-db82-4948-8ff0-798a8f9afe79)
