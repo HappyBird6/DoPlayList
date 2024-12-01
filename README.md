@@ -5,7 +5,7 @@
 
 사용자가 플레이리스트 링크를 제출하면 해당 영상 페이지에 있는 타임스탬프 정보를 스크래핑하여 각 노래를 검색하고 재생목록에도 추가할 수 있게 도와준다.
 
-https://doplaylist.com
+~https://doplaylist.com~ // 현재 AWS EC2 프리티어 사용량 이슈로 접속불가
 
 프로젝트에서 플레이리스트는 여러 노래를 이어붙여 장시간으로 만든 하나의 플레이리스트 영상을 말함.
 프로젝트에서 재생목록은 사용자가 생성한 유튜브 재생목록을 말함.
@@ -23,8 +23,9 @@ https://doplaylist.com
 3. 스크래핑한 데이터에서 곡을 특정할 수 있는 데이터(타임스탬프, youtube music정보란)에서 가수와 곡 제목 추출(playlist service니까 해당 클래스의 코드에 링크?)
 4. 추출한 각 곡에 대해 사용자의 재생목록에 추가하거나 유튜브 검색 링크로 link
 5. 한번 검색된 플레이리스트 정보는 DB에 저장되고 이후 빠른 반환이 가능함
+![DoPlayList sequence diagram](https://github.com/user-attachments/assets/ca752a98-db82-4948-8ff0-798a8f9afe79)
+![DoPlayList ERD](https://github.com/user-attachments/assets/494f9aee-6518-4a01-8e0b-173d705550e6)
 
-<span style='color:red'>여기에 시퀀스 다이어그램, ERD</span>
 
 ### 기술
 <hr>
@@ -33,23 +34,25 @@ https://doplaylist.com
 + 프레임워크 : SpringBoot, Spring JPA
 + DB : mariadb(AWS EC2 배포 서버와 같이 사용)
 + 템플릿 엔진 : thymeleaf
-+ 라이브러리 : spring security, Caffeine cache, Selenium Java, Jwt, Http WebClient, bonigarcia의 WebDriverManager(깃헙 링크), lombok
++ 라이브러리 : spring security, Caffeine cache, Selenium Java, Jwt, Http WebClient, bonigarcia의 WebDriverManager(https://github.com/bonigarcia/webdrivermanager), lombok
 + API : Google OAuth2, youtube data api 
 + 서버 및 배포: AWS EC2 Linux(우분투 버전)에 jar 배포, AWS Route53
 
 ### 학습 사항
 <hr>
+
 + 웹호스팅(도메인 구매, https 인증서 발급, 도메인 연결)
 + Google Cloud Platform에서 테스팅 단계에서 실제 서비스 단계로의 인증 절차
-+ Selenium Java의 사용, ChromeDriver 업데이트 이슈를 해결하기 위한 bonigarcia의 WebDriverManager 라이브러리 적용(https://github.com/bonigarcia/webdrivermanager)
++ Selenium Java의 사용, ChromeDriver 업데이트 이슈를 해결하기 위한 bonigarcia의 WebDriverManager 라이브러리 적용
 + Youtube data api v3 사용법. 해당 api의 개발 가이드및 예시 코드를 적극 참조
-+ 
+
 
 ### 트러블 / 피드백
 <hr>
+
 + #### Youtube data api v3 사용의 할당량 문제
 	+ 할당량은 1일단 10000을 제공 받는데 이는 약 200곡을 재생목록에 추가할 수 있다.
-	+ 한번 이용에 5~10곡을 추가한다고 가정했을때 20~40명이 하루 사이트 사용 최대
+	+ 한번 이용에 5곡을 추가한다고 가정했을때 40명이 하루 사이트 사용 최대
 	+ 해결 방법 : 
 		+ 할당량 추가 신청(서류 작업이 복잡하고 오래걸림)
 		+ Google Cloud Platform의 프로젝트 단위로 할당량을 받기 때문에 여러 프로젝트를 만들어 할당량을 쓸 때마다 프로젝트의 client_secret을 바꾸면 해결. 본 프로젝트는 구글 로그인을 겸하기 때문에 적용하기에 부적합. 구글 로그인을 쓰지 않고 유튜브 api만 사용하는 경우에는 유효할 듯.
@@ -57,7 +60,6 @@ https://doplaylist.com
 + #### Google Cloud Platform 서비스 전환 및 구글 페이지 색인 문제
 	+ 프로젝트에서 사용자 유튜브 재생목록에 접근하는 민감한 작업을 하기 때문에 개인 정보 처리 약관, 개인 정보 보호 정책 등 추가할 내용이 많았음. 
 	+ google에서 요구하는 사용자의 개인정보 방침에 대한 공지에 대한 페이지가 구글 페이지 색인이 되지 않아 이를 해결하는데 실제 서비스 단계로의 전환에 오랜 기간이 걸림. 
-	+ 개발 이외의 문제라 가장 까다로웠던 부분
 + #### Selenium 사용의 동시 요청 고려를 못함
 	+ 셀레니움은 일반적으로 싱글 스레드를 사용하므로 한번에 한명의 작업만 할 수 있다.
 	+ 해결 방법 : 사용자의 요청을 별도의 스레드에서 처리하도록 설정해 각 스레드에서 별도로 셀레니움 인스턴스를 생성하게 하면 됨
