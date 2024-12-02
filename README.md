@@ -25,6 +25,8 @@
 5. 한번 검색된 플레이리스트 정보는 DB에 저장되고 이후 빠른 반환이 가능함
 ![DoPlayList sequence diagram](https://github.com/user-attachments/assets/ca752a98-db82-4948-8ff0-798a8f9afe79)
 ![DoPlayList ERD](https://github.com/user-attachments/assets/494f9aee-6518-4a01-8e0b-173d705550e6)
+![sample_doplaylist_step1](https://github.com/user-attachments/assets/f1d66d1f-a269-4734-8707-7ce675b866b0)
+![sample_doplaylist_step2](https://github.com/user-attachments/assets/5d5c1086-607e-4d8e-a50c-ed066976572b)
 
 
 ### 기술
