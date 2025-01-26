@@ -41,15 +41,16 @@ public class PlaylistService {
     
     @Async("taskExecutor")
     public Playlist scrapPage(String url) {
-        // System.out.println("SCRAP PAGE : 드라이버 셋업 전");
+        System.out.println("SCRAP PAGE : 드라이버 셋업 전");
         WebDriverManager.chromedriver().setup();
-        // System.out.println("SCRAP PAGE : 드라이버 셋업 후");
+        System.out.println("SCRAP PAGE : 드라이버 셋업 후");
         ChromeOptions chromeOptions = new ChromeOptions();
-        chromeOptions.addArguments("--headless");
-        chromeOptions.addArguments("--no-sandbox");
-        chromeOptions.addArguments("--single-process");
-        chromeOptions.addArguments("--disable-dev-shm-usage");
+        // chromeOptions.addArguments("--headless");
+        // chromeOptions.addArguments("--no-sandbox");
+        // chromeOptions.addArguments("--single-process");
+        // chromeOptions.addArguments("--disable-dev-shm-usage");
         ChromeDriver driver = new ChromeDriver(chromeOptions);
+        System.out.println("드라이버 설정");
         WebElement element;
         Playlist playlist;
         
@@ -422,10 +423,10 @@ public class PlaylistService {
         }
 
         ChromeOptions chromeOptions = new ChromeOptions();
-        chromeOptions.addArguments("--headless");
-        chromeOptions.addArguments("--no-sandbox");
-        chromeOptions.addArguments("--single-process");
-        chromeOptions.addArguments("--disable-dev-shm-usage");
+        // chromeOptions.addArguments("--headless");
+        // chromeOptions.addArguments("--no-sandbox");
+        // chromeOptions.addArguments("--single-process");
+        // chromeOptions.addArguments("--disable-dev-shm-usage");
         ChromeDriver driver = new ChromeDriver(chromeOptions);
         
         WebElement element;
@@ -475,14 +476,16 @@ public class PlaylistService {
    
     public Playlist getPlaylist(String url){
         String videoId = extractVideoIdFromUrl(url);
-
+        System.out.println("getPlaylist : "+url);
         // 플리 저장
         Playlist playlist = new Playlist();
         Optional<Playlist> temp = playlistRepository.findById(videoId);
         if(temp.isPresent()){
+            // System.out.println("temp 존재");
             playlist = temp.get();
             playlistRepository.updateRequestCount(playlist.getId());
         }else{
+            // System.out.println("temp 존재 X");
             playlist = scrapPage(url);
             if(playlist==null){
                 return null;
