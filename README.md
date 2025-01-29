@@ -15,6 +15,18 @@
 
 (2024.3~2024.5) 1인 프로젝트
 
+### 기술
+<hr>
+
++ 언어 : JAVA, javascript, css, html
++ 프레임워크 : SpringBoot, Spring JPA
++ DB : mariadb(AWS EC2 배포 서버와 같이 사용)
++ 템플릿 엔진 : thymeleaf
++ 라이브러리 : spring security, Caffeine cache, Selenium Java, Jwt, Http WebClient, bonigarcia의 WebDriverManager(https://github.com/bonigarcia/webdrivermanager), lombok
++ API : Google OAuth2, youtube data api 
++ 서버 및 배포: AWS EC2 Linux(우분투 버전)에 jar 배포, AWS Route53
+
+
 ### 기능
 <hr>
 
@@ -28,17 +40,6 @@
 ![sample_doplaylist_step1](https://github.com/user-attachments/assets/f1d66d1f-a269-4734-8707-7ce675b866b0)
 ![sample_doplaylist_step2](https://github.com/user-attachments/assets/5d5c1086-607e-4d8e-a50c-ed066976572b)
 
-
-### 기술
-<hr>
-
-+ 언어 : JAVA, javascript, css, html
-+ 프레임워크 : SpringBoot, Spring JPA
-+ DB : mariadb(AWS EC2 배포 서버와 같이 사용)
-+ 템플릿 엔진 : thymeleaf
-+ 라이브러리 : spring security, Caffeine cache, Selenium Java, Jwt, Http WebClient, bonigarcia의 WebDriverManager(https://github.com/bonigarcia/webdrivermanager), lombok
-+ API : Google OAuth2, youtube data api 
-+ 서버 및 배포: AWS EC2 Linux(우분투 버전)에 jar 배포, AWS Route53
 
 ### 학습 사항
 <hr>
